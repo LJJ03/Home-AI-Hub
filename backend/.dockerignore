@@ -26,6 +26,7 @@ coverage.xml
 htmlcov/
 build/
 dist/
+tests/
 
 # Local runtime data and logs must stay outside the image.
 *.log

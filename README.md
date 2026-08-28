@@ -146,6 +146,8 @@ python -m pytest --run-llm-integration
 - [Chat API Layer](docs/architecture/chat-api-layer.md)
 - [Chat API 使用说明](docs/api/chat.md)
 - [开发与架构规范](docs/development/standards.md)
+- [Backend Runtime 运维说明](docs/operations/runtime.md)
+- [Backend Docker 镜像说明](docs/operations/docker.md)
 - [LLM Provider 运维指南](docs/operations/llm-providers.md)
 - [LLM Integration 测试指南](docs/testing/llm-integration.md)
 
@@ -156,4 +158,3 @@ Layer 公共契约，也没有实现数据库聊天存储、聊天历史、Conve
 模型、认证、JWT、Redis 逻辑、RAG、Embeddings、向量数据库、文件上传、多模态、
 WebSocket、Vue、Home Assistant、Agent、Tool/Function Calling、MCP、自动 Provider
 fallback/routing/retry、成本统计或内容安全策略。
-
