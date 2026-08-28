@@ -1,0 +1,173 @@
+# LLM Integration 测试指南
+
+## 当前验证状态
+
+Phase 6 Step 1–Step 9 的生产代码、测试代码与静态质量门禁已完成，但当前机器缺少可用
+的项目 Python 3.13、pytest 及完整依赖环境：
+
+- 正式默认 `python -m pytest` 尚未实际执行成功；
+- DeepSeek/OpenAI 真实 Integration Tests 尚未在显式授权后运行；
+- 当前结论是 **Phase 6 Freeze Pending / 待正式 pytest 验证**。
+
+静态语法或架构扫描不能替代 pytest，也不得写成“测试已通过”。
+
+## 三类测试完全隔离
+
+### 默认离线测试
+
+```bash
+cd backend
+python -m pytest
+```
+
+默认测试：
+
+- 不需要 PostgreSQL；
+- 不需要真实 API Key、Base URL、模型或供应商账号；
+- 使用 Mock Provider 和 `httpx.MockTransport`；
+- 通过自动 fixture 阻断 DNS 与原始 Socket 连接；
+- 收集真实 LLM 测试但将其标记为 skip；
+- 不产生供应商费用。
+
+这是每次提交和默认 CI 必须运行的测试路径。
+
+### PostgreSQL integration
+
+```bash
+cd backend
+python -m pytest --run-integration
+```
+
+`--run-integration` 只启用 Phase 3 PostgreSQL、Alembic 和 Repository 集成测试，不会
+启用真实 LLM 测试。数据库测试使用独立临时数据库，并沿用既有清理流程。
+
+### 真实 LLM integration
+
+POSIX Shell：
+
+```bash
+cd backend
+LLM_INTEGRATION_ACKNOWLEDGE_COST=true python -m pytest --run-llm-integration
+```
+
+Windows PowerShell：
+
+```powershell
+cd backend
+$env:LLM_INTEGRATION_ACKNOWLEDGE_COST = "true"
+python -m pytest --run-llm-integration
+```
+
+不要把 API Key 写在命令中。应提前通过当前进程环境或受控 Secret 注入目标 Provider 的
+配置。`--run-llm-integration` 不会启用 PostgreSQL integration。
+
+## 运行前置条件
+
+每一个真实 LLM 测试必须具有 `llm_integration` marker，并且以下全局条件同时满足：
+
+1. 显式传入 `--run-llm-integration`；
+2. 当前进程环境中 `LLM_INTEGRATION_ACKNOWLEDGE_COST=true`。
+
+DeepSeek 还需要：
+
+- `DEEPSEEK_API_KEY`；
+- `DEEPSEEK_BASE_URL`；
+- `DEEPSEEK_DEFAULT_MODEL`。
+
+OpenAI 还需要：
+
+- `OPENAI_API_KEY`；
+- `OPENAI_BASE_URL`；
+- `OPENAI_DEFAULT_MODEL`。
+
+缺少 CLI 开关、成本确认或目标 Provider 任一配置时，测试会给出只包含缺失条件名称的
+skip reason。只配置 DeepSeek 时 OpenAI 测试会跳过，反之亦然；测试不会回退到 Mock，
+也不会要求非选中 Provider 的密钥。
+
+`.env.example` 中的 `LLM_INTEGRATION_ACKNOWLEDGE_COST=false` 只是安全模板。测试门禁读取
+当前进程环境，必须由操作者在本次明确运行前主动设为 `true`。
+
+## 真实测试覆盖
+
+每个真实 Provider 只执行两个最小测试：
+
+1. `generate()` 非流式最小调用；
+2. `stream_generate()` 流式最小调用。
+
+测试直接实例化对应 Provider，避免把 Provider 验证与 Chat API、Lifespan、数据库或
+业务层混合。测试使用无敏感内容的 `Say hi.`，最大生成量为 16 tokens，并验证：
+
+- `provider_name` 正确；
+- `model_name` 非空；
+- finish reason 满足冻结枚举；
+- 非流式文本为空或非空白；
+- 流式至少收到 final chunk；
+- Chunk 可以按顺序重组，但不会被打印；
+- 内部 `provider_request_id` 不进入公开 `ChatResponse`；
+- Provider 和流迭代器在正常、异常、取消路径关闭；
+- 单个操作具有受控超时。
+
+真实测试不覆盖认证失败、限流、超时、网络失败或畸形 JSON，以避免无意义消耗额度。
+这些错误通过离线 MockTransport 测试覆盖。
+
+## 网络门禁
+
+默认 autouse fixture 拦截：
+
+- DNS 解析；
+- `socket.create_connection`；
+- 原始 `socket.connect` / `connect_ex`。
+
+只有以下测试可以绕过网络阻断：
+
+- 带 `integration` marker 且显式传入 `--run-integration` 的 PostgreSQL 测试；
+- 带 `llm_integration` marker、显式传入 `--run-llm-integration` 且成本确认为 `true`
+  的真实 LLM 测试。
+
+普通测试即使传入某个 integration 开关也不能联网。LLM 和 PostgreSQL 开关不互相
+授权。`httpx.MockTransport` 不使用真实 Socket，因此默认离线 Provider 测试不受影响。
+
+内部 HTTP Client 固定 `trust_env=False`，不读取系统代理。测试与生产 Adapter 均不得
+绕过这一边界。
+
+## 安全输出规则
+
+真实测试不得输出或写入测试失败消息：
+
+- API Key 或 Authorization Header；
+- 完整 Prompt 或消息列表；
+- 完整非流式 Response；
+- 完整流式 Chunk 或重组文本；
+- 原始 `httpx.Request` / `httpx.Response`；
+- 供应商原始异常或异常 cause。
+
+测试只断言规范化元数据和布尔状态。密钥不硬编码，不写入 fixture ID、参数 ID、日志或
+snapshot。失败必须通过统一安全异常边界呈现。
+
+## CI 规则
+
+- 默认 CI 只能执行 `python -m pytest`；
+- 不向默认 CI 注入真实 Provider 密钥；
+- 不在默认 CI 设置成本确认；
+- PostgreSQL integration 可作为独立受控任务运行；
+- 真实 LLM integration 必须是受保护、人工授权、可审计的单独任务；
+- 真实测试任务不得因失败自动切换 Provider 或重试；
+- 测试报告和构建日志必须经过敏感信息审查。
+
+## Phase 6 Freeze 验证
+
+Phase 6 正式 Freeze 的最低前置条件：
+
+1. 在项目 Python 3.13 环境安装 `.[test]` 依赖；
+2. 默认 `python -m pytest` 实际完成且全部通过；
+3. 确认默认运行没有 DNS、Socket、真实密钥或供应商调用；
+4. 确认 Phase 3/4/5 回归测试没有失败；
+5. 记录测试命令、Python 版本、通过/跳过/失败数量。
+
+真实 LLM integration 仍要求独立授权和成本确认。若将其列为生产上线门禁，应分别记录
+DeepSeek/OpenAI 的执行时间和结果，但不得记录响应正文或凭据。
+
+在最低前置条件完成前，只能声明：
+
+> Phase 6 Freeze Pending / 待正式 pytest 验证
+

@@ -1,0 +1,234 @@
+# 开发与架构规范
+
+## 适用范围
+
+本规范适用于 Phase 5 Freeze 之后以及 Phase 6 Adapter 基线之上的所有后端开发。
+Phase 6 当前仍是 Freeze Pending。关键词“必须”“不得”表示架构门禁，不能以开发便利
+或供应商兼容为由绕过。
+
+## 基本原则
+
+- 每个阶段结束时项目必须保持 Runnable、Testable 和 Extensible。
+- 上层模块依赖抽象和稳定入口，不依赖基础设施具体实现。
+- 新功能优先通过新增模块扩展，不修改已冻结公共契约。
+- 配置遵循 12-Factor App，从环境变量或 `.env` 注入，不写死部署信息。
+- 代码必须具备完整类型标注，并保持模块职责单一。
+- 不为尚未进入范围的业务提前建立模型、接口或集成。
+
+## 模块依赖规则
+
+允许的核心依赖方向为：
+
+```text
+HTTP Client -> Chat Router -> ChatService -> LLMService -> LLMProvider Interface
+未来 API / 业务模块 -> Repository 契约 -> Repository 实现 -> SQLAlchemy
+Bootstrap -> Settings + Registry + Factory + Provider + LLMService
+```
+
+强制约束：
+
+- `app/llm` 不得导入 `app.db`、`app.models`、`app.repositories` 或 SQLAlchemy。
+- LLM Provider 不得依赖 FastAPI、Redis 或业务模块。
+- `app/llm/http` 不得依赖具体 Provider、Chat、API、Persistence 或业务 Service。
+- 业务模块不得导入具体 Provider、Registry 或 Factory。
+- `LLMService` 不得读取环境变量，也不得定位或创建 Provider。
+- Factory 只能通过 Registry 创建 Provider，不得包含供应商分支。
+- Bootstrap 是 LLM 层唯一组合根；Registry 和 Provider 不得保存为全局可变单例。
+- Persistence Layer 不得依赖 LLM Provider Layer。
+- Chat Router 只能通过 Dependency 获取 `ChatService`，不得调用 `LLMService`、具体
+  Provider、Registry、Factory 或 Bootstrap。
+- `ChatService` 只能依赖注入的 `LLMService`、冻结的 LLM DTO 与独立 Chat DTO；不得
+  依赖 FastAPI、Provider 实现、数据库、Repository、SQLAlchemy 或 Redis。
+- Chat API 不得加入数据库 Dependency，不得在请求路径读取或写入 Persistence Layer。
+- LLM 生命周期只在 FastAPI Lifespan 组装，Dependency 不读取环境变量或执行 Bootstrap。
+
+可使用自动化依赖扫描或架构测试加强上述约束，但工具不能替代 Code Review。
+
+## Chat API 标准
+
+- `POST /api/v1/chat/completions` 保持无状态；`messages` 只代表客户端随本次请求提交的
+  临时上下文，服务端不得保存或补建聊天历史。
+- `request_id` 只关联单次调用，不得作为 `conversation_id`、用户标识、认证凭据或
+  数据库主键使用。缺失时由 ChatService 为本次调用生成。
+- 客户端只允许提交 `user` 与 `assistant` role；系统策略应由未来服务端编排层注入，
+  不得通过在当前公共 Schema 开放 `system` role 绕过边界。
+- HTTP Chat DTO 与 LLM DTO 必须分别维护。不得直接返回 `LLMResponse`、
+  `LLMStreamChunk`、`provider_request_id`、SDK usage 或供应商原始错误。
+- 公共 Schema 必须拒绝未知字段；不得加入 `extra_kwargs`、vendor options、tools、
+  functions 或其他绕过契约的逃生口。
+- 未来有状态聊天必须新增 Conversation Service、Repository Protocol 和新接口；不得
+  修改当前无状态 completions 的路径、字段或语义。
+
+## SSE 标准
+
+- Chat 流式响应使用 `text/event-stream`，不用 WebSocket；事件只允许冻结的 `chunk`、
+  `done` 和 `error` 契约。
+- Router 应预取首个事件，使响应开始前的 LLM 错误仍能使用正常 HTTP 状态和统一错误体。
+- 响应开始后的错误只能发送安全 `error` SSE Event，然后关闭流，不得泄漏异常字符串。
+- 一个流内的 `request_id` 必须稳定，事件顺序必须由 `sequence` 明确表达；空文本响应
+  仍必须产生 `done`。
+- 下游取消和断开必须传播，不得吞掉 `asyncio.CancelledError`；ChatService 与 Router
+  都必须在正常、错误和取消路径关闭各自持有的异步迭代器。
+- 不得为了 SSE 缓存完整 Prompt、完整生成结果或完整 Chunk 序列，也不得记录 Chunk 正文。
+
+## HTTP 错误边界
+
+- 预期 LLM 失败必须集中映射为现有 `ApplicationError`，不得在 Router 中散落未经规范化
+  的 `HTTPException`。
+- 客户端消息必须使用固定公共错误码和安全文案，不能使用 `str(exception)`、异常
+  `cause`、供应商 HTTP 错误或 SDK Exception。
+- 安全 details 只允许最小关联信息，例如客户端提供的 `request_id` 和经过验证的
+  `retry_after_seconds`。
+- 响应不得包含 API Key、Authorization Header、完整 Prompt、完整模型响应或
+  `provider_request_id`。未知异常继续交由既有全局 500 Handler 处理。
+- 请求校验继续使用既有 422 错误结构；系统端点的错误语义不得因 Chat 映射改变。
+
+## Provider Adapter 标准
+
+每个新增 Adapter 必须：
+
+1. 实现 `LLMProvider` 的完整生成、流式生成和关闭契约。
+2. 把供应商 HTTP/SSE 请求和响应映射到公共 Schema，不暴露传输或供应商类型。
+3. 把供应商、HTTP 和协议异常映射为统一 `LLMException`。
+4. 传播取消，不吞掉 `asyncio.CancelledError`。
+5. 在流结束、异常和取消路径释放客户端、响应流及其他资源。
+6. 只通过构造参数接收已经校验的配置，不自行读取环境变量。
+7. 复用内部 `LLMHTTPClient` 与 SSE Parser，不复制通用传输实现。
+8. 不安装或导入供应商 SDK；确有必要时必须先进行独立架构与安全评审。
+9. 在 Bootstrap 中显式注册，并加入同一默认 Contract Tests。
+10. 为供应商 JSON、异常、流取消和资源释放提供独立 MockTransport 测试。
+
+新增 Provider 不得要求修改 `LLMService`、Factory、未来 Chat API 或 Persistence
+Layer。若无法满足，说明公共契约可能需要演进，必须先发起独立架构评审。
+
+## 配置与密钥
+
+- 版本控制中只保存 `.env.example`，不得提交真实 `.env` 或密钥。
+- API Key、Token、密码使用 `SecretStr` 或等价安全类型。
+- 缺失、非法或未注册配置必须 fail fast，不得自动回退。
+- 真实 Provider Base URL 必须来自环境、使用 HTTPS，且不得包含 userinfo、query 或
+  fragment。
+- connect/read/stream timeout 留空时继承 `LLM_TIMEOUT_SECONDS`；stream timeout 只表示
+  相邻事件空闲上限，不表示整个流总时长。
+- 配置层只负责读取、规范化、校验和保护值，不负责创建 Provider。
+- Registry 是 Provider 名称是否可用的最终权威。
+- 新增配置键必须同步更新 `.env.example`、专题文档和配置测试。
+- 配置对象的 `repr`、日志和错误消息不得泄漏密钥。
+
+## 日志与隐私
+
+以下内容不得写入日志、trace attribute、异常消息或测试快照：
+
+- API Key、Token、Authorization Header 或 Cookie；
+- 完整 Prompt、系统提示词或消息正文；
+- 完整模型响应；
+- 原始 SDK Request/Response/Event；
+- 可能包含个人数据或家庭设备敏感信息的载荷。
+- 原始 `httpx.Request/Response`、供应商 JSON 或异常 cause。
+
+未来可记录经过批准的最小元数据，例如 Provider 名称、模型名、耗时、标准错误码、
+token 数量和不可逆关联标识。引入 prompt/response 采样必须经过单独隐私与安全评审。
+
+## 测试标准
+
+默认测试命令：
+
+```bash
+cd backend
+python -m pytest
+```
+
+默认测试必须：
+
+- 零外部网络；
+- 零真实 API Key；
+- 零供应商账号依赖；
+- 使用 Mock Provider 或离线传输替身；
+- 覆盖完整生成、流式生成、错误映射、取消和关闭；
+- 验证 Schema 拒绝供应商字段和原始 SDK 对象；
+- 验证未注册 Provider 明确失败且不回退；
+- 保持现有系统端点和 Persistence 测试无回归。
+- 覆盖 Chat Schema、DTO 转换、生命周期、依赖注入、JSON/SSE、错误映射和流取消；
+- 通过 AST 或等价扫描验证 Router、ChatService、Provider 和 Persistence 的依赖方向；
+- 验证 Chat API 无数据库访问、无 Redis、无会话状态且不需要 API Key。
+
+真实 PostgreSQL 测试继续使用既有 `--run-integration` 显式开关。
+
+真实 LLM 测试只能位于 `tests/integration/llm/`，必须具有 `llm_integration` marker，
+并同时要求：
+
+- `--run-llm-integration`；
+- 当前进程环境 `LLM_INTEGRATION_ACKNOWLEDGE_COST=true`；
+- 目标 Provider 的 API Key、HTTPS Base URL 和默认模型。
+
+缺少条件时必须 skip，不得 fail 或 fallback。`--run-integration` 与
+`--run-llm-integration` 不互相启用。默认 CI 不得注入真实密钥或成本确认。真实测试只
+允许最小非流式/流式调用，不使用额度验证认证、限流或畸形响应。
+
+新增 Provider 必须通过公共 Contract Tests，并添加 Adapter 自身的映射、异常和资源
+释放测试。公共契约测试应验证可观察行为，供应商专属分块或协议细节只能在 Adapter
+测试中断言。
+
+## 变更质量门禁
+
+每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：
+
+1. 默认 `python -m pytest` 通过。
+2. 不存在未批准的供应商 SDK 或网络请求。
+3. Mock 模式在无密钥环境可创建并离线运行。
+4. 供应商异常和 SDK 对象没有越过 Adapter 边界。
+5. Factory 没有新增供应商条件分支。
+6. Bootstrap 注册显式、Registry 在组合后冻结。
+7. 密钥、完整 Prompt 和完整响应没有进入日志或异常。
+8. Persistence Layer、Alembic、Docker 启动链和 readiness 没有被破坏。
+9. README、`.env.example` 和专题文档与实现一致。
+10. 临时测试文件、缓存和构建产物没有提交。
+11. Chat Router 只通过 Dependency 调用 ChatService，且 ChatService 只调用 LLMService。
+12. 非流式 JSON、SSE chunk/done/error、错误状态码和取消释放契约无回归。
+13. Chat 路径没有数据库或 Redis Dependency，没有保存消息、完整响应或会话状态。
+14. `/health`、`/ready`、`/version` 路径和既有语义无回归。
+15. 架构依赖扫描、API Contract Tests 和全量默认测试均通过。
+16. HTTP Client 保持 `trust_env=False`，没有全局 Client 或导入时网络行为。
+17. 真实 LLM 测试保持独立 marker、显式开关、成本确认和安全 skip reason。
+18. 测试报告没有密钥、Authorization、完整 Prompt、Response 或 Chunk。
+
+## 必须进行架构评审的变更
+
+以下变更不得作为普通 Adapter 开发直接合入：
+
+- 修改 `LLMProvider` 方法或生命周期；
+- 修改公共 Request、Response、Chunk、finish reason 或异常语义；
+- 在 `LLMService` 中加入业务状态、持久化、缓存、权限或供应商选择；
+- 改变 Registry、Factory 或 Bootstrap 的职责边界；
+- 增加自动回退、自动降级、多 Provider 路由或重试编排；
+- 记录 Prompt、响应正文或供应商原始载荷；
+- 让 LLM 成为 `/ready` 的必需依赖；
+- 建立 LLM 与 Persistence Layer 的直接依赖；
+- 修改 Phase 3 或 Phase 4 Freeze 基线。
+- 修改 `/api/v1/chat/completions` 的路径、无状态语义或公开请求/响应字段；
+- 新增、删除或改变 `chunk`、`done`、`error` SSE Event 的语义；
+- 让 Router 绕过 ChatService，或让 ChatService 定位 Provider/基础设施；
+- 在当前 Chat API 中加入 `conversation_id`、聊天历史、认证、持久化或 Redis；
+- 改变 LLMException 的公共 HTTP 状态码、错误码或安全披露策略；
+- 让 LLM 远程可用性成为 `/ready` 的必需条件；
+- 修改 Phase 5 Freeze 基线。
+- 引入供应商 SDK、系统代理继承或新的通用 HTTP Client。
+- 修改 timeout 语义或允许客户端覆盖 Provider Base URL。
+- 改变真实 LLM integration 的显式成本确认和网络门禁。
+
+## Freeze 规则
+
+Phase 3、Phase 4 与 Phase 5 已冻结。Phase 6 代码和 Freeze 准备基线已完成，但正式
+Freeze 仍被项目 Python 3.13 环境中的默认全量 pytest 阻塞。后续阶段只允许：
+
+- 新增 Provider Adapter，并在 Bootstrap 显式注册；
+- 新增调用 `LLMService` 的上层模块；
+- 新增调用稳定 Chat API 的客户端，或在现有无状态端点之上新增上层服务；
+- 通过新增 Conversation Service、Repository Protocol 和新接口实现有状态聊天；
+- 新增不破坏公共契约的测试、文档和观测装饰器；
+- 经独立架构评审后进行版本化契约演进。
+
+详细 Freeze 基线见 [LLM Provider Layer](../architecture/llm-provider-layer.md)、
+[Chat API Layer](../architecture/chat-api-layer.md)、[架构总览](../architecture/overview.md)、
+[LLM Provider 运维指南](../operations/llm-providers.md) 和
+[LLM Integration 测试指南](../testing/llm-integration.md)。

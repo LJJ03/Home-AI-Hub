@@ -1,0 +1,48 @@
+# Local environment and credentials must be injected at runtime.
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+token.json
+
+# Local Python environments and generated artifacts are not image inputs.
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+build/
+dist/
+
+# Local runtime data and logs must stay outside the image.
+*.log
+logs/
+postgres-data/
+redis-data/
+data/
+tmp/
+temp/
+
+# Editor, operating-system, and VCS metadata are not runtime dependencies.
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Future frontend artifacts are not part of the backend image context.
+node_modules/

@@ -1,0 +1,53 @@
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.docker.example
+!.env.test.example
+!.env.production.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Local database / runtime data
+postgres-data/
+redis-data/
+data/
+tmp/
+temp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Node / frontend future-proofing
+node_modules/
+dist/
+build/
+
+# Secrets / credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+credentials.json
+token.json
