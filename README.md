@@ -7,17 +7,24 @@ Home AI Hub 是基于 Python 3.13、FastAPI 和 PostgreSQL 17 的后端项目。
 - Phase 5 无状态 Chat API Layer（Frozen）；
 - Phase 6 DeepSeek/OpenAI Provider Adapter、HTTP/SSE 基础设施和测试门禁。
 
-Phase 6 的代码、离线测试设计、显式真实 Integration Tests 和静态质量门禁已经完成，
-但当前机器尚未在项目 Python 3.13 环境成功执行正式全量 `python -m pytest`。因此当前
-状态是 **Phase 6 Freeze Pending / 待正式 pytest 验证**，不能声明 Phase 6 已正式冻结。
+Phase 6 已在 Python 3.13 环境完成正式默认测试并冻结，Git 基线 Tag 为 `v0.6.0`。
+真实 DeepSeek/OpenAI Integration Tests 仍保持显式 opt-in，尚未运行时不得描述为通过。
 
 ## Docker 启动
 
-默认 `.env.example` 使用零密钥、零外部网络的 `mock` Provider：
+Docker 开发配置源使用独立模板，默认是零密钥、零外部网络的 `mock` Provider：
 
-```bash
+仅在对应文件尚不存在时复制模板；已有配置应按字段差异合并，禁止直接覆盖。
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+Copy-Item .env.docker .env
 docker compose up --build
 ```
+
+第二次复制仅是当前既有 Compose 仍读取 `.env` 的兼容步骤。Phase 7 Step 3 没有修改
+Compose 启动链；`.env.docker` 的直接接线留待后续经确认的 Step 4。Linux 或 macOS 使用
+对应的 `cp` 命令。
 
 Compose 会依次完成 PostgreSQL 健康检查、Alembic 自动迁移和 Backend 启动。Redis 独立
 启动，但尚未参与应用逻辑或 readiness。
@@ -39,7 +46,10 @@ docker compose down
 
 项目正式运行基线为 Python 3.13：
 
+以下复制命令同样只适用于尚不存在 `.env` 的首次初始化。
+
 ```powershell
+Copy-Item .env.example .env
 cd backend
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[test]"
@@ -124,12 +134,14 @@ python -m pytest --run-llm-integration
 
 真实测试还要求目标 Provider 的 API Key、Base URL 和默认模型存在。缺少任一条件时只
 跳过对应 Provider；`--run-integration` 与 `--run-llm-integration` 不会互相启用。
-详细说明见 [LLM Integration 测试指南](docs/testing/llm-integration.md)。
+详细说明见[默认离线测试](docs/testing/default-tests.md)、
+[PostgreSQL Integration 测试](docs/testing/postgres-integration.md)和
+[LLM Integration 测试指南](docs/testing/llm-integration.md)。
 
 ## 配置与安全
 
-应用使用 Pydantic Settings 读取环境变量和本地 `.env`，受版本控制的模板为
-`.env.example`。
+应用使用 Pydantic Settings 读取进程环境变量和本地 `.env`。版本控制只保存 local、
+docker、test 和 production sample 四类 example 模板；生产秘密必须由部署环境注入。
 
 - API Key 使用 `SecretStr`，但仍禁止写入代码、提交记录、日志、异常和命令历史；
 - Authorization Header、完整 Prompt、完整 Response 和完整流式 Chunk 不得记录；
@@ -138,6 +150,9 @@ python -m pytest --run-llm-integration
   `LLM_STREAM_TIMEOUT_SECONDS` 缺失时继承 `LLM_TIMEOUT_SECONDS`；
 - Stream timeout 是相邻流式事件之间的空闲上限，不是整个流的总时长；
 - `/ready` 不远程探测 LLM，供应商健康应由受控运维检查单独判断。
+
+模板选择、字段所有权和 fail-closed 规则见
+[环境变量分层与安全边界](docs/operations/environment.md)。
 
 ## 架构文档
 
@@ -148,7 +163,10 @@ python -m pytest --run-llm-integration
 - [开发与架构规范](docs/development/standards.md)
 - [Backend Runtime 运维说明](docs/operations/runtime.md)
 - [Backend Docker 镜像说明](docs/operations/docker.md)
+- [环境变量分层与安全边界](docs/operations/environment.md)
 - [LLM Provider 运维指南](docs/operations/llm-providers.md)
+- [默认离线测试](docs/testing/default-tests.md)
+- [PostgreSQL Integration 测试](docs/testing/postgres-integration.md)
 - [LLM Integration 测试指南](docs/testing/llm-integration.md)
 
 ## 当前未实现范围

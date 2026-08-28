@@ -34,3 +34,6 @@ Runtime 镜像不得包含本地虚拟环境、测试缓存、日志、数据库
 Authorization Header 或 Provider 凭据。Provider 配置只能在容器启动时注入。
 
 镜像通过项目现有依赖安装 HTTP Adapter，不安装 OpenAI、DeepSeek 或其他供应商 SDK。
+
+各运行场景的模板选择和秘密注入规则见
+[环境变量分层与安全边界](environment.md)。

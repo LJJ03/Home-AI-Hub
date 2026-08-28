@@ -11,6 +11,11 @@ Daemon 前排除本地环境、测试、缓存、运行数据、日志、凭据�
 docker build --tag home-ai-hub-backend:local backend
 ```
 
+Docker 本地运行配置应从 `.env.docker.example` 建立未受版本控制的 `.env.docker`。
+不要使用宿主机本地开发模板代替，因为容器中的 PostgreSQL 主机名必须是 Compose 服务名。
+当前 Compose 尚未直接读取 `.env.docker`；Step 4 接线完成前仍需按环境分层文档提供兼容
+的 `.env`，不得据此提前声明 Compose 分层完成。
+
 ## 镜像结构
 
 Dockerfile 使用两个 Stage：
@@ -45,3 +50,5 @@ docker run --rm --entrypoint id home-ai-hub-backend:local
 
 Phase 7 Step 2 不修改 `docker-compose.yml` 或其启动链。PostgreSQL 健康顺序、一次性
 Migration 服务和 Compose Runtime 验证仍属于后续经确认的 Phase 7 Step。
+
+完整配置矩阵见[环境变量分层与安全边界](environment.md)。

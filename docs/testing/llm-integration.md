@@ -2,14 +2,9 @@
 
 ## 当前验证状态
 
-Phase 6 Step 1–Step 9 的生产代码、测试代码与静态质量门禁已完成，但当前机器缺少可用
-的项目 Python 3.13、pytest 及完整依赖环境：
-
-- 正式默认 `python -m pytest` 尚未实际执行成功；
-- DeepSeek/OpenAI 真实 Integration Tests 尚未在显式授权后运行；
-- 当前结论是 **Phase 6 Freeze Pending / 待正式 pytest 验证**。
-
-静态语法或架构扫描不能替代 pytest，也不得写成“测试已通过”。
+Phase 6 已在项目 Python 3.13 环境完成默认全量 pytest，并正式 Freeze。DeepSeek/OpenAI
+真实 Integration Tests 尚未运行，仍需要明确授权、成本确认和完整 Provider 配置；未运行
+不得描述为通过或线上验证完成。
 
 ## 三类测试完全隔离
 
@@ -30,6 +25,9 @@ python -m pytest
 - 不产生供应商费用。
 
 这是每次提交和默认 CI 必须运行的测试路径。
+
+`.env.test.example` 始终使用 `mock` 且将成本确认保持为关闭。真实 Provider 的 API Key、
+HTTPS Base URL 和默认模型只能通过当前进程或受控 Secret 注入，不能填入受版本控制模板。
 
 ### PostgreSQL integration
 
@@ -154,20 +152,8 @@ snapshot。失败必须通过统一安全异常边界呈现。
 - 真实测试任务不得因失败自动切换 Provider 或重试；
 - 测试报告和构建日志必须经过敏感信息审查。
 
-## Phase 6 Freeze 验证
+## Phase 6 Freeze 状态
 
-Phase 6 正式 Freeze 的最低前置条件：
-
-1. 在项目 Python 3.13 环境安装 `.[test]` 依赖；
-2. 默认 `python -m pytest` 实际完成且全部通过；
-3. 确认默认运行没有 DNS、Socket、真实密钥或供应商调用；
-4. 确认 Phase 3/4/5 回归测试没有失败；
-5. 记录测试命令、Python 版本、通过/跳过/失败数量。
-
-真实 LLM integration 仍要求独立授权和成本确认。若将其列为生产上线门禁，应分别记录
-DeepSeek/OpenAI 的执行时间和结果，但不得记录响应正文或凭据。
-
-在最低前置条件完成前，只能声明：
-
-> Phase 6 Freeze Pending / 待正式 pytest 验证
-
+Phase 6 Freeze Git 基线为 `v0.6.0`。默认测试的通过不代表真实 Provider Integration 已
+运行。真实 LLM Integration 仍要求独立授权和成本确认；如果未来成为生产上线门禁，必须
+分别记录目标 Provider、执行时间和通过/失败/未运行状态，但不得记录响应正文或凭据。

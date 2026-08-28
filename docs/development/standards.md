@@ -103,7 +103,11 @@ Layer。若无法满足，说明公共契约可能需要演进，必须先发起
 
 ## 配置与密钥
 
-- 版本控制中只保存 `.env.example`，不得提交真实 `.env` 或密钥。
+- 版本控制只保存 `.env.example`、`.env.docker.example`、`.env.test.example` 和
+  `.env.production.example`，不得提交真实 `.env` 或密钥。
+- local、docker、test 和 production sample 必须保持场景隔离，不能依赖未声明的模板
+  覆盖顺序。
+- 所有模板默认使用 `LLM_PROVIDER=mock`；生产样例在数据库秘密未注入时必须 fail closed。
 - API Key、Token、密码使用 `SecretStr` 或等价安全类型。
 - 缺失、非法或未注册配置必须 fail fast，不得自动回退。
 - 真实 Provider Base URL 必须来自环境、使用 HTTPS，且不得包含 userinfo、query 或
@@ -112,7 +116,9 @@ Layer。若无法满足，说明公共契约可能需要演进，必须先发起
   相邻事件空闲上限，不表示整个流总时长。
 - 配置层只负责读取、规范化、校验和保护值，不负责创建 Provider。
 - Registry 是 Provider 名称是否可用的最终权威。
-- 新增配置键必须同步更新 `.env.example`、专题文档和配置测试。
+- 新增配置键必须同步更新所有适用的环境模板、专题文档和配置契约测试。
+- 真实秘密只能由当前进程、CI Secret 或部署平台 Secret Manager 注入，不得进入
+  Dockerfile、Compose 默认值、示例模板正文或文档。
 - 配置对象的 `repr`、日志和错误消息不得泄漏密钥。
 
 ## 日志与隐私
@@ -181,7 +187,7 @@ python -m pytest
 6. Bootstrap 注册显式、Registry 在组合后冻结。
 7. 密钥、完整 Prompt 和完整响应没有进入日志或异常。
 8. Persistence Layer、Alembic、Docker 启动链和 readiness 没有被破坏。
-9. README、`.env.example` 和专题文档与实现一致。
+9. README、四类环境模板和专题文档与实现一致。
 10. 临时测试文件、缓存和构建产物没有提交。
 11. Chat Router 只通过 Dependency 调用 ChatService，且 ChatService 只调用 LLMService。
 12. 非流式 JSON、SSE chunk/done/error、错误状态码和取消释放契约无回归。
