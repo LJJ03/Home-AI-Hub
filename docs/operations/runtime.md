@@ -47,3 +47,7 @@ Authorization Header 或 Provider 凭据。Provider 配置只能在容器启动�
 当前 Runtime 与 Compose 已通过默认 pytest 的静态契约检查。由于本机没有 Docker、
 Podman、nerdctl 或 buildah，镜像构建、容器启动和端点动态运行验证尚未执行。静态门禁
 通过不等同于 Docker Runtime 已完成动态验证。
+
+动态 build/run、非 root 身份、Compose 和系统端点的发布检查命令及证据分类见
+[Phase 7 Release Gate](release-gate.md)。在这些硬门禁实际执行前，Phase 7 保持
+`Freeze Pending`。

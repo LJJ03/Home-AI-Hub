@@ -125,6 +125,8 @@ def _load_compose() -> dict[str, Any]:
 def _files_for_secret_scan() -> tuple[Path, ...]:
     explicit_files = [
         *PROJECT_ROOT.glob(".env*.example"),
+        PROJECT_ROOT / "README.md",
+        PROJECT_ROOT / "CHANGELOG.md",
         DOCKERFILE,
         *PROJECT_ROOT.glob("docker-compose*.yml"),
         *PROJECT_ROOT.glob(".github/workflows/*.yml"),
@@ -441,4 +443,11 @@ def test_documentation_matches_the_current_quality_gate_state() -> None:
     assert "真实 Integration Tests 已通过" not in reviewed_docs
     assert "PostgreSQL Integration Tests 已通过" not in reviewed_docs
     assert "Phase 7 已冻结" not in all_documentation
-    assert "Phase 7 Freeze" not in all_documentation
+    assert (
+        "Phase 7 — Runtime, Docker, CI and Release Gate 已冻结（Freeze）。"
+        not in all_documentation
+    )
+    assert (
+        "Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending"
+        in all_documentation
+    )

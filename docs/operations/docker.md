@@ -99,3 +99,6 @@ docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.de
 描述为动态验证通过。
 
 完整配置矩阵见[环境变量分层与安全边界](environment.md)。
+正式发布还必须按 [Phase 7 Release Gate](release-gate.md) 分别记录 image build/run、
+Compose config/up、Migration 和 `/health`、`/ready`、`/version` 动态结果。当前这些项目
+均为 `Not Run`，不能由静态 Compose 契约替代。

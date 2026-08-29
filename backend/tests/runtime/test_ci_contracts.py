@@ -153,4 +153,7 @@ def test_ci_documentation_matches_the_implemented_default_scope() -> None:
     assert "PostgreSQL Integration 已在默认 CI 运行" not in documentation
     assert "真实 LLM Integration 已在默认 CI 运行" not in documentation
     assert "Phase 7 已冻结" not in documentation
-    assert "Phase 7 Freeze" not in documentation
+    assert (
+        "Phase 7 — Runtime, Docker, CI and Release Gate 已冻结（Freeze）。"
+        not in documentation
+    )

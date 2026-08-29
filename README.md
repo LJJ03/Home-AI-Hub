@@ -10,6 +10,11 @@ Home AI Hub 是基于 Python 3.13、FastAPI 和 PostgreSQL 17 的后端项目。
 Phase 6 已在 Python 3.13 环境完成正式默认测试并冻结，Git 基线 Tag 为 `v0.6.0`。
 真实 DeepSeek/OpenAI Integration Tests 仍保持显式 opt-in，尚未运行时不得描述为通过。
 
+Phase 7 已建立 Git 基线、Backend Runtime 镜像、环境模板、Compose 拓扑、静态质量门禁和
+分层 GitHub Actions Workflows。当前 Release Gate 结论为 **Phase 7 — Runtime, Docker,
+CI and Release Gate Freeze Pending。** 本机没有可用容器引擎，GitHub Workflows 也尚未在
+Runner 上触发；这些动态门禁均为 `Not Run`，不得描述为通过，当前不得创建 `v0.7.0`。
+
 ## Docker 启动
 
 Docker 开发配置源使用独立模板，默认是零密钥、零外部网络的 `mock` Provider：
@@ -178,6 +183,10 @@ docker、test 和 production sample 四类 example 模板；生产秘密必须�
 - [Backend Runtime 运维说明](docs/operations/runtime.md)
 - [Backend Docker 镜像说明](docs/operations/docker.md)
 - [环境变量分层与安全边界](docs/operations/environment.md)
+- [CI 与 Integration Workflows](docs/operations/ci.md)
+- [Phase 7 Release Gate](docs/operations/release-gate.md)
+- [Runtime 与 Release Baseline ADR](docs/adr/0001-runtime-release-baseline.md)
+- [Changelog](CHANGELOG.md)
 - [LLM Provider 运维指南](docs/operations/llm-providers.md)
 - [默认离线测试](docs/testing/default-tests.md)
 - [PostgreSQL Integration 测试](docs/testing/postgres-integration.md)

@@ -1,0 +1,214 @@
+"""Static contracts for the Phase 7 release decision and its evidence."""
+
+from __future__ import annotations
+
+import ast
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+RELEASE_GATE = PROJECT_ROOT / "docs/operations/release-gate.md"
+CHANGELOG = PROJECT_ROOT / "CHANGELOG.md"
+ADR = PROJECT_ROOT / "docs/adr/0001-runtime-release-baseline.md"
+DEFAULT_CI = PROJECT_ROOT / ".github/workflows/ci.yml"
+POSTGRES_CI = PROJECT_ROOT / ".github/workflows/postgres-integration.yml"
+LLM_CI = PROJECT_ROOT / ".github/workflows/llm-integration.yml"
+
+PENDING_CONCLUSION = (
+    "Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。"
+)
+FROZEN_CONCLUSION = (
+    "Phase 7 — Runtime, Docker, CI and Release Gate 已冻结（Freeze）。"
+)
+
+
+def _source(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def _workflow(path: Path) -> dict[str, Any]:
+    document = yaml.load(_source(path), Loader=yaml.BaseLoader)
+    assert isinstance(document, dict)
+    return document
+
+
+def _run_commands(path: Path) -> tuple[str, ...]:
+    workflow = _workflow(path)
+    return tuple(
+        str(step["run"]).strip()
+        for job in workflow["jobs"].values()
+        for step in job["steps"]
+        if "run" in step
+    )
+
+
+def test_release_gate_artifacts_exist() -> None:
+    assert RELEASE_GATE.is_file()
+    assert CHANGELOG.is_file()
+    assert ADR.is_file()
+
+
+def test_release_gate_defines_evidence_statuses() -> None:
+    release_gate = _source(RELEASE_GATE)
+
+    for status in ("Passed", "Skipped", "Not Run", "Failed"):
+        assert status in release_gate
+    assert "未运行不能写成通过" in release_gate
+    assert "不得计为 Passed" in release_gate
+
+
+def test_release_gate_documents_all_test_entry_points() -> None:
+    release_gate = _source(RELEASE_GATE)
+
+    assert "python -m pytest" in release_gate
+    assert "python -m pytest --run-integration" in release_gate
+    assert "python -m pytest --run-llm-integration" in release_gate
+    assert "LLM_INTEGRATION_ACKNOWLEDGE_COST=true" in release_gate
+
+
+def test_release_gate_documents_docker_and_compose_smoke_commands() -> None:
+    release_gate = _source(RELEASE_GATE)
+
+    assert "docker build --tag" in release_gate
+    assert "docker run --rm" in release_gate
+    assert "docker compose --env-file .env.docker config" in release_gate
+    assert "docker compose --env-file .env.docker up --build --detach" in release_gate
+    assert "curl --fail http://localhost:8000/health" in release_gate
+    assert "curl --fail http://localhost:8000/ready" in release_gate
+    assert "curl --fail http://localhost:8000/version" in release_gate
+
+
+def test_current_dynamic_and_runner_checks_are_recorded_as_not_run() -> None:
+    release_gate = _source(RELEASE_GATE)
+
+    assert (
+        "Docker dynamic verification: Not Run — "
+        "Docker/Podman/nerdctl/buildah unavailable on this machine."
+    ) in release_gate
+    assert (
+        "GitHub Actions runtime execution: Not Run — workflows created but "
+        "not triggered on GitHub Runner."
+    ) in release_gate
+    assert "PostgreSQL Integration workflow: Not Run" in release_gate
+    assert "Real LLM Integration: Not Run" in release_gate
+
+
+def test_phase_7_remains_pending_without_dynamic_evidence() -> None:
+    release_gate = _source(RELEASE_GATE)
+    changelog = _source(CHANGELOG)
+    adr = _source(ADR)
+
+    assert PENDING_CONCLUSION in release_gate
+    assert PENDING_CONCLUSION in changelog
+    assert PENDING_CONCLUSION in adr
+    assert FROZEN_CONCLUSION not in "\n".join((release_gate, changelog, adr))
+    assert "Pending 状态不得创建或移动 `v0.7.0`" in release_gate
+
+
+def test_changelog_records_phase_7_scope_without_false_runtime_claims() -> None:
+    changelog = _source(CHANGELOG)
+
+    for capability in (
+        "Git 仓库",
+        "Backend Runtime 镜像静态契约",
+        "环境模板",
+        "Compose 拓扑",
+        "Secret Hygiene",
+        "默认离线 CI",
+        "PostgreSQL Integration Workflow",
+        "LLM Integration Workflow",
+        "Release Gate",
+    ):
+        assert capability in changelog
+    assert "Docker image dynamic build/run" in changelog
+    assert "GitHub 默认 CI 的 Runner execution" in changelog
+    assert "Real DeepSeek/OpenAI Integration" in changelog
+    assert "Docker dynamic verification 已通过" not in changelog
+    assert "GitHub workflows 已在 Runner 上通过" not in changelog
+    assert "Real LLM Integration 已通过" not in changelog
+
+
+def test_changelog_preserves_the_phase_6_freeze_baseline() -> None:
+    changelog = _source(CHANGELOG)
+
+    assert "[v0.6.0] — Phase 6 Freeze baseline" in changelog
+    assert "`1afd8a4`" in changelog
+    assert "真实 DeepSeek/OpenAI Integration 保持未运行" in changelog
+
+
+def test_adr_records_the_runtime_and_release_decisions() -> None:
+    adr = _source(ADR)
+
+    assert "Python 3.13" in adr
+    assert "Migration 使用与 Backend 相同的镜像" in adr
+    assert "Backend 不自行执行 Migration" in adr
+    assert "默认 Provider 为 `mock`" in adr
+    assert "零真实 API Key" in adr
+    assert "PostgreSQL Integration 与默认 CI 分离" in adr
+    assert "真实 LLM Integration 只能手动触发" in adr
+    assert "人工确认成本" in adr
+    assert "绝不把 `Not Run` 写成" in adr
+
+
+def test_release_gate_preserves_phase_3_to_6_boundaries() -> None:
+    release_gate = _source(RELEASE_GATE)
+
+    for boundary in (
+        "Persistence Layer 不得反向依赖",
+        "Provider Interface",
+        "无状态 Chat Completions JSON/SSE",
+        "Chat API 不感知具体 Provider",
+        "ChatService 只调用 LLMService",
+        "Bootstrap",
+        "Factory",
+        "Registry",
+        "自动 retry",
+        "LLM `/ready` 远程探活",
+    ):
+        assert boundary in release_gate
+
+
+def test_default_ci_still_runs_only_default_offline_pytest() -> None:
+    workflow = _workflow(DEFAULT_CI)
+    commands = _run_commands(DEFAULT_CI)
+    source = _source(DEFAULT_CI)
+
+    assert set(workflow["on"]) == {"push", "pull_request"}
+    assert commands[-1] == "python -m pytest"
+    assert all("--run-integration" not in command for command in commands)
+    assert all("--run-llm-integration" not in command for command in commands)
+    assert "${{ secrets." not in source
+
+
+def test_integration_workflows_remain_separate_from_default_ci() -> None:
+    postgres = _workflow(POSTGRES_CI)
+    llm = _workflow(LLM_CI)
+    postgres_commands = _run_commands(POSTGRES_CI)
+    llm_commands = _run_commands(LLM_CI)
+
+    assert "pull_request" not in postgres["on"]
+    assert set(llm["on"]) == {"workflow_dispatch"}
+    assert "python -m pytest --run-integration" in postgres_commands
+    assert all("--run-llm-integration" not in command for command in postgres_commands)
+    assert "python -m pytest --run-llm-integration" in llm_commands
+    assert all("--run-integration" not in command for command in llm_commands)
+
+
+def test_release_gate_contracts_are_static_and_require_no_docker() -> None:
+    tree = ast.parse(_source(Path(__file__)), filename=__file__)
+    imported_modules = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    imported_modules.update(
+        node.module
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    )
+
+    assert {"subprocess", "docker", "socket"}.isdisjoint(imported_modules)

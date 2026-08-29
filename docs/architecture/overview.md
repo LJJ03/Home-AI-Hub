@@ -13,9 +13,13 @@ Home AI Hub 已形成四层后端基线：
 4. Phase 6 Real Provider Adapters：内部 HTTP/SSE 基础设施、DeepSeek/OpenAI Adapter、
    显式注册、离线 Contract Tests 和 opt-in Integration Tests，代码与静态门禁完成。
 
-当前环境尚未在项目 Python 3.13 中成功执行正式全量 `python -m pytest`，真实 Provider
-Integration Tests 也尚未实际运行。因此 Phase 6 状态是 **Freeze Pending / 待正式
-pytest 验证**，不是正式 Frozen。
+Phase 6 已在 Python 3.13 环境完成默认全量测试并正式冻结，Git 基线为 `v0.6.0`。真实
+Provider Integration Tests 仍保持显式 opt-in 且尚未运行，不能描述为 Provider 已完成
+线上验证。
+
+Phase 7 已建立 Runtime、环境模板、Compose、静态质量门禁和分层 CI Workflows；但 Docker
+动态 build/run、Compose smoke 和 GitHub Runner 执行尚无证据。因此当前结论是
+**Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
 
 Redis 目前只随 Docker Compose 启动，不参与应用逻辑。聊天历史、用户系统、RAG、Agent、
 Home Assistant 和前端仍不在当前范围。
@@ -151,9 +155,9 @@ Phase 6 通过新增内部 HTTP/SSE 组件与 Adapter 扩展，没有改变这�
 真实 Provider 接入没有改变 Chat API。未来有状态聊天必须新增 Conversation Service、
 Repository Protocol 和新增接口。
 
-### Phase 6 Real Provider Adapters — Freeze Pending
+### Phase 6 Real Provider Adapters — Frozen
 
-Freeze 准备基线包括：
+冻结基线包括：
 
 - `LLMSettings` 真实 Provider 配置与 timeout 继承；
 - 内部 `LLMHTTPClient` 和 SSE Parser；
@@ -163,8 +167,22 @@ Freeze 准备基线包括：
 - 显式、成本感知的真实 LLM Integration Tests；
 - 本阶段文档和 `.env.example`。
 
-正式 Freeze 的阻塞项是：在项目 Python 3.13 环境实际执行默认 `python -m pytest` 并
-获得全量通过结果。在此之前不得把 Phase 6 标记为 Frozen。
+Phase 6 的默认全量 pytest 已在 Python 3.13 环境通过并形成 `v0.6.0` Git 基线。真实
+DeepSeek/OpenAI Integration 仍未运行，未来只能在明确授权、密钥齐全和成本确认后手动
+执行；这不改变默认离线 Freeze 基线，也不得被误写为真实 Provider 线上验证通过。
+
+### Phase 7 Runtime、Docker、CI 与 Release Gate — Freeze Pending
+
+- Backend Runtime 固定 Python 3.13、多阶段构建和非 root 用户；
+- 环境模板区分 local、Docker、test 与 production sample；
+- Compose 静态拓扑固定 PostgreSQL 17、Redis 8、独立 Migration 和 Backend；
+- 默认离线 CI、PostgreSQL Integration 与 Manual LLM Integration 使用独立 Workflow；
+- Runtime、Environment、Compose、SDK Ban、Secret Hygiene、Freeze Regression 和 Release
+  Gate Contract Tests 由默认 pytest 离线执行。
+
+Docker/Compose 动态验证和 GitHub Runner 执行仍为 `Not Run`，因此不得创建 `v0.7.0` 或
+声明 Phase 7 Freeze。证据分类、动态命令、Tag 和回滚规则见
+[Phase 7 Release Gate](../operations/release-gate.md)。
 
 ## 文档权威关系
 
@@ -174,4 +192,6 @@ Freeze 准备基线包括：
 - [开发与架构规范](../development/standards.md)：后续变更门禁；
 - [LLM Provider 运维指南](../operations/llm-providers.md)：部署、安全和运维；
 - [LLM Integration 测试指南](../testing/llm-integration.md)：测试开关与 Freeze 验证。
-
+- [CI 与 Integration Workflows](../operations/ci.md)：默认和显式 Workflow 边界；
+- [Phase 7 Release Gate](../operations/release-gate.md)：证据状态、动态检查、Tag 与回滚；
+- [Runtime 与 Release Baseline ADR](../adr/0001-runtime-release-baseline.md)：Phase 7 决策记录。

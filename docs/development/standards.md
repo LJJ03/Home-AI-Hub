@@ -2,9 +2,10 @@
 
 ## 适用范围
 
-本规范适用于 Phase 5 Freeze 之后以及 Phase 6 Adapter 基线之上的所有后端开发。
-Phase 6 当前仍是 Freeze Pending。关键词“必须”“不得”表示架构门禁，不能以开发便利
-或供应商兼容为由绕过。
+本规范适用于 Phase 5 Freeze 之后以及 Phase 6 Adapter 冻结基线之上的所有后端开发。
+Phase 6 已正式冻结，Git 基线为 `v0.6.0`；Phase 7 当前是 Release Gate
+`Freeze Pending`。关键词“必须”“不得”表示架构门禁，不能以开发便利或供应商兼容为由
+绕过。
 
 ## 基本原则
 
@@ -205,6 +206,20 @@ protected environment、人工成本确认和单一 Provider 配置，只启用
 `--run-llm-integration`。两类 Workflow 不得共享 Integration 开关、Provider secrets 或
 自动 fallback/retry/routing 行为。
 
+## Release Gate 标准
+
+- 发布证据只允许使用 `Passed`、`Skipped`、`Not Run` 和 `Failed` 四种状态；只有实际执行
+  成功的检查可记为 `Passed`。
+- 静态 Dockerfile/Compose 契约不能替代镜像 build/run、非 root 身份、Migration、Compose
+  up 和系统端点 Smoke Test 的动态证据。
+- Workflow 文件和 Contract Tests 通过不能替代 GitHub Runner 的真实 run 记录。
+- 默认 CI、PostgreSQL Integration 和 Manual LLM Integration 必须分别记录，不能互相
+  代替或共享授权。
+- 任一 Phase 7 硬门禁为 `Skipped`、`Not Run` 或 `Failed` 时只能标记 `Freeze Pending`，
+  不得创建、移动或发布 `v0.7.0`。
+- Tag 只能建立在全部硬门禁通过、文档与实现一致且工作树 clean 的审核 commit 上。
+- 当前状态与人工检查清单以 [Phase 7 Release Gate](../operations/release-gate.md) 为准。
+
 ## 变更质量门禁
 
 每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：
@@ -254,8 +269,9 @@ protected environment、人工成本确认和单一 Provider 配置，只启用
 
 ## Freeze 规则
 
-Phase 3、Phase 4 与 Phase 5 已冻结。Phase 6 代码和 Freeze 准备基线已完成，但正式
-Freeze 仍被项目 Python 3.13 环境中的默认全量 pytest 阻塞。后续阶段只允许：
+Phase 3、Phase 4、Phase 5 与 Phase 6 已冻结。Phase 7 因 Docker 动态验证和 GitHub
+Runner 执行证据缺失，当前只能保持 `Freeze Pending`。后续阶段不得用 Runtime、CI 或
+Release 工作绕过既有冻结边界；对 Phase 3–6 只允许：
 
 - 新增 Provider Adapter，并在 Bootstrap 显式注册；
 - 新增调用 `LLMService` 的上层模块；
@@ -267,4 +283,5 @@ Freeze 仍被项目 Python 3.13 环境中的默认全量 pytest 阻塞。后续�
 详细 Freeze 基线见 [LLM Provider Layer](../architecture/llm-provider-layer.md)、
 [Chat API Layer](../architecture/chat-api-layer.md)、[架构总览](../architecture/overview.md)、
 [LLM Provider 运维指南](../operations/llm-providers.md) 和
-[LLM Integration 测试指南](../testing/llm-integration.md)。
+[LLM Integration 测试指南](../testing/llm-integration.md)。Phase 7 的证据状态、Tag 与回滚
+规则见 [Phase 7 Release Gate](../operations/release-gate.md)。
