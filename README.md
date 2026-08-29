@@ -114,6 +114,11 @@ cd backend
 python -m pytest
 ```
 
+GitHub Actions 默认离线 CI 会在每次 `push` 和 `pull request` 使用 Python 3.13 执行同一
+命令。CI 不注入 GitHub secrets，不运行 PostgreSQL 或真实 LLM Integration，也不要求
+Docker daemon。依赖安装阶段可能访问 Python 包仓库；测试执行阶段由项目 Network Gate
+阻断公网 DNS 和 Socket，同时保留 TestClient/asyncio 所需的 loopback。
+
 PostgreSQL integration 使用独立开关：
 
 ```bash

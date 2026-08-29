@@ -15,6 +15,31 @@ Key。需要显式环境样例时只能从 `.env.test.example` 开始，并保�
 
 默认质量基线是：零真实 API Key、零供应商账号、零外部网络、零 Docker daemon 依赖。
 
+## GitHub Actions 默认离线 CI
+
+`.github/workflows/ci.yml` 在 `push` 和 `pull request` 时运行，使用显式 Python 3.13，
+并在 `backend/` 中依次执行：
+
+```console
+python -m pip install --upgrade pip
+python -m pip install -e ".[test]"
+python -m pytest
+```
+
+依赖安装阶段可能需要访问 Python 包仓库。测试执行阶段依靠仓库的 autouse Network Gate
+阻断公网 DNS、Socket 和真实供应商域名，只允许本机 loopback。默认 CI：
+
+- 固定 `LLM_PROVIDER=mock`，不读取 GitHub secrets；
+- 不需要真实 API Key 或供应商账号；
+- 不运行 PostgreSQL Integration；
+- 不运行真实 LLM Integration；
+- 不传入 `--run-integration` 或 `--run-llm-integration`；
+- 不启动 Docker、Compose、PostgreSQL、Redis 或真实 Provider；
+- 不产生供应商费用。
+
+Dockerfile 和 Compose 只接受静态契约检查。当前本机的 Docker 动态 build/run 仍未执行。
+Integration Workflows 留待 Step 7 单独设计；默认 CI 不承担其职责。
+
 ## 安全语义
 
 默认测试通过自动 fixture 阻断外部 DNS 和 Socket，只允许 TestClient、asyncio 和 Windows

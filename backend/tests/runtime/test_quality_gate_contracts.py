@@ -127,6 +127,7 @@ def _files_for_secret_scan() -> tuple[Path, ...]:
         *PROJECT_ROOT.glob(".env*.example"),
         DOCKERFILE,
         *PROJECT_ROOT.glob("docker-compose*.yml"),
+        *PROJECT_ROOT.glob(".github/workflows/*.yml"),
     ]
     recursive_files = [
         *DOCS_ROOT.rglob("*.md"),

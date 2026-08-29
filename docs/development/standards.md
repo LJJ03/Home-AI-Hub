@@ -194,6 +194,11 @@ Runtime 质量门禁必须同时验证 Python 版本范围、SDK 禁入、秘密
 默认网络阻断、冻结层依赖方向和文档事实一致性。门禁不得执行 Docker、真实数据库或真实
 LLM，也不得把未运行的 Integration Tests 或动态容器验证描述为通过。
 
+默认 GitHub Actions CI 只允许由 `push` 和 `pull_request` 触发，使用 `contents: read`
+最小权限和 Python 3.13。其唯一测试入口为默认 `python -m pytest`；不得读取 GitHub
+secrets、传入 Integration 开关、启动 Compose 或启用真实 Provider。依赖安装网络与测试
+执行网络必须分开描述，测试执行仍由项目 Network Gate 保持离线。
+
 ## 变更质量门禁
 
 每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：
