@@ -13,8 +13,16 @@ docker build --tag home-ai-hub-backend:local backend
 
 Docker 本地运行配置应从 `.env.docker.example` 建立未受版本控制的 `.env.docker`。
 不要使用宿主机本地开发模板代替，因为容器中的 PostgreSQL 主机名必须是 Compose 服务名。
-当前 Compose 尚未直接读取 `.env.docker`；Step 4 接线完成前仍需按环境分层文档提供兼容
-的 `.env`，不得据此提前声明 Compose 分层完成。
+基础 Compose 直接把该文件注入 Backend 和 Migration；启动时还要用 `--env-file` 让
+Compose 插值读取相同配置源：
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+docker compose --env-file .env.docker up --build
+```
+
+不要将 Docker 模板再复制为 `.env`。真实环境文件受 Git 和 Docker build context 排除，
+Compose 文件本身也不提供 API Key 或真实 Provider 默认值。
 
 ## 镜像结构
 
@@ -46,9 +54,48 @@ docker run --rm --entrypoint id home-ai-hub-backend:local
 镜像 healthcheck 使用 Python 标准库请求 `APP_PORT`（默认 `8000`）上的 `/health`。
 镜像不为此安装 `curl`，也不改变已经冻结的 `/ready` 数据库语义。
 
-## Compose 边界
+## Compose 服务拓扑
 
-Phase 7 Step 2 不修改 `docker-compose.yml` 或其启动链。PostgreSQL 健康顺序、一次性
-Migration 服务和 Compose Runtime 验证仍属于后续经确认的 Phase 7 Step。
+基础本地拓扑包含四个职责独立的服务：
+
+1. `postgres` 使用 PostgreSQL 17、持久化 named volume 和 `pg_isready` healthcheck；
+2. `redis` 使用独立 named volume 和 `redis-cli ping`，仅作为未来能力的运行时预留；
+3. `migration` 与 Backend 使用同一镜像，在 PostgreSQL healthy 后一次性执行
+   `python -m alembic upgrade head`；
+4. `backend` 仅在 PostgreSQL healthy 且 Migration 成功后启动，不在自身启动命令中运行
+   Migration 或测试。
+
+Migration 独立可以让 schema 失败阻断应用启动，并避免多副本并发迁移。Redis 不属于
+Backend 的依赖，也不进入 `/ready`。容器 healthcheck 使用 `/health` 检查进程存活；
+`/ready` 保持冻结的 PostgreSQL readiness 语义，且不远程探测 LLM。
+
+默认配置为 `LLM_PROVIDER=mock`，因此本地 Compose 不需要 API Key，也不会进行真实 LLM
+调用。选择真实 Provider 必须由操作者在受控运行环境显式注入完整配置，并保留 fail-fast。
+
+## Compose 文件分层
+
+- `docker-compose.yml`：本地基础拓扑，包含 PostgreSQL、Redis、Migration 和 Backend；
+- `docker-compose.dev.yml`：可选开发增强，目前只提高日志级别；
+- `docker-compose.test.yml`：只启动隔离的 PostgreSQL 17 测试服务，默认映射宿主机
+  `5433` 并使用临时数据目录；
+- `docker-compose.production.example.yml`：外部镜像与数据库注入契约样例。
+
+开发增强暂不启用 bind mount 或 reload。当前机器无法进行 Docker 动态验证，在此之前
+覆盖已构建 wheel 可能造成宿主机与镜像代码不一致。需要叠加开发配置时使用：
+
+```powershell
+docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+生产 Compose 只是部署契约说明，不是可直接上线的配置或秘密管理方案。它要求平台显式
+提供不可变镜像引用和数据库连接，不含 build、bind mount、reload 或 API Key。真实生产
+凭据必须由 Secret Manager 或部署平台注入。
+
+## 验证状态
+
+默认 pytest 使用 YAML 静态解析验证服务、依赖顺序、healthcheck、Migration、配置接线及
+敏感信息边界，不依赖 Docker daemon。本机未安装 Docker、Podman、nerdctl 或 buildah，
+因此 `docker compose config`、镜像构建、服务启动和端点 Smoke Test 尚未执行；这不会被
+描述为动态验证通过。
 
 完整配置矩阵见[环境变量分层与安全边界](environment.md)。

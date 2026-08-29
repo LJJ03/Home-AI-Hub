@@ -1,0 +1,44 @@
+name: home-ai-hub-production-example
+
+x-production-common: &production-common
+  image: ${BACKEND_IMAGE:?BACKEND_IMAGE must reference an immutable image}
+  environment:
+    APP_ENVIRONMENT: production
+    APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+    DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be injected by the deployment platform}
+    LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  migration:
+    <<: *production-common
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  backend:
+    <<: *production-common
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).close()
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    init: true
+    restart: unless-stopped

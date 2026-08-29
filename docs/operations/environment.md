@@ -70,9 +70,15 @@ Docker 开发将 `.env.docker.example` 复制为 `.env.docker`。测试模板可
 
 复制模板前必须确认 `.env` 不存在；已有配置应逐项合并，不能通过复制命令覆盖现有秘密。
 
-Phase 7 Step 3 只建立配置分层，没有修改 Compose。当前 Compose 仍声明读取 `.env`，因此
-在 Step 4 完成接线前，使用现有 Compose 时需要从 `.env.docker` 初始化一份被 Git 忽略的
-`.env`。这只是兼容方式，不代表 Docker Compose 分层已经完成。
+基础 Compose 为 Backend 和 Migration 显式声明 `env_file: .env.docker`。启动命令还必须
+使用 `docker compose --env-file .env.docker ...`，使 PostgreSQL 初始化值、端口以及
+`DOCKER_DATABASE_URL` 的 Compose 插值来自同一文件。Compose 将
+`DOCKER_DATABASE_URL` 注入容器内的标准 `DATABASE_URL`，应用 Settings 因此不需要知道
+Docker 专属字段。不要省略 `--env-file`，也不要把 Docker 模板复制为 `.env`；否则宿主机
+进程环境或本地开发 `.env` 可能参与插值，形成配置来源不一致。
+
+测试拓扑使用 `.env.test.example` 的隔离数据库名和 `5433` 宿主机端口；生产 Compose
+样例不读取 `.env.production.example`，其镜像和数据库连接必须由部署平台显式注入。
 
 生产环境不得从工作目录加载带真实值的 dotenv 文件。应由部署平台分别注入数据库秘密和
 所选 Provider 秘密，并保留配置校验失败即停止启动的语义。

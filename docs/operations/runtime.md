@@ -28,6 +28,10 @@ Runtime Stage 创建非特权用户 `app`，默认 UID 和 GID 均为 `10001`。
 
 部署和发布 Smoke Test 必须在数据库迁移完成后单独检查 `/ready`。
 
+Compose 使用与 Backend 相同的不可变镜像先运行一次性 Migration；只有 PostgreSQL
+healthy 且 `alembic upgrade head` 成功后才启动 Backend。Backend 进程本身不执行迁移，
+从而让 schema 变更失败保持可见，并避免多个应用副本并发迁移。
+
 ## 安全边界
 
 Runtime 镜像不得包含本地虚拟环境、测试缓存、日志、数据库数据、私钥、API Key、

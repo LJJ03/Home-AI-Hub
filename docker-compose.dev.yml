@@ -1,0 +1,7 @@
+name: home-ai-hub
+
+services:
+  backend:
+    environment:
+      APP_LOG_LEVEL: DEBUG
+

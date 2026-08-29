@@ -175,6 +175,21 @@ python -m pytest
 释放测试。公共契约测试应验证可观察行为，供应商专属分块或协议细节只能在 Adapter
 测试中断言。
 
+## Docker Compose 标准
+
+- 基础本地拓扑固定包含 `postgres`、`redis`、`migration` 和 `backend`；
+- PostgreSQL 必须先通过自身 healthcheck，Migration 才可执行；
+- Migration 必须使用 Backend 的同一镜像一次性执行 `alembic upgrade head`，失败时
+  Backend 不得启动；
+- Backend 启动命令不得执行 Migration 或 pytest；
+- Backend 容器 healthcheck 使用 `/health`，应用 `/ready` 继续只表达 PostgreSQL
+  readiness；
+- Redis 仅保留自身 healthcheck，不得成为 Backend 依赖或 `/ready` 条件；
+- Docker 开发配置必须从 `.env.docker` 注入，并默认使用 `mock` Provider；
+- Compose 不得包含 API Key、Authorization Header、真实 Provider 默认值或生产秘密；
+- 开发 override 不得被生产样例隐式继承，生产样例不得包含 bind mount 或 reload；
+- 默认测试只做静态 Compose 契约验证，不得依赖 Docker daemon。
+
 ## 变更质量门禁
 
 每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：

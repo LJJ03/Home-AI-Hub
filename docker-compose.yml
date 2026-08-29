@@ -4,8 +4,9 @@ x-backend-common: &backend-common
   build:
     context: ./backend
     dockerfile: Dockerfile
+  image: home-ai-hub-backend:local
   env_file:
-    - .env
+    - .env.docker
   environment:
     DATABASE_URL: ${DOCKER_DATABASE_URL:?DOCKER_DATABASE_URL must be set}
 
@@ -31,7 +32,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -44,7 +45,7 @@ services:
       start_period: 5s
     restart: unless-stopped
 
-  migrate:
+  migration:
     <<: *backend-common
     command: ["python", "-m", "alembic", "upgrade", "head"]
     depends_on:
@@ -59,10 +60,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
+      migration:
         condition: service_completed_successfully
     ports:
       - "${APP_PORT:-8000}:${APP_PORT:-8000}"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.request;
+          port = os.getenv('APP_PORT', '8000');
+          urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=2).close()
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
     init: true
     restart: unless-stopped
 

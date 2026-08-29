@@ -18,16 +18,20 @@ Docker 开发配置源使用独立模板，默认是零密钥、零外部网络�
 
 ```powershell
 Copy-Item .env.docker.example .env.docker
-Copy-Item .env.docker .env
-docker compose up --build
+docker compose --env-file .env.docker up --build
 ```
 
-第二次复制仅是当前既有 Compose 仍读取 `.env` 的兼容步骤。Phase 7 Step 3 没有修改
-Compose 启动链；`.env.docker` 的直接接线留待后续经确认的 Step 4。Linux 或 macOS 使用
+基础 Compose 明确读取 `.env.docker`，命令行的 `--env-file` 同时让 Compose 插值使用同一
+配置源。Docker 开发不再要求或支持把 `.env.docker` 复制为 `.env`；Linux 或 macOS 使用
 对应的 `cp` 命令。
 
 Compose 会依次完成 PostgreSQL 健康检查、Alembic 自动迁移和 Backend 启动。Redis 独立
-启动，但尚未参与应用逻辑或 readiness。
+启动并执行自身健康检查，但尚未参与应用逻辑、Backend 启动依赖或 readiness。需要开发
+日志增强时，可显式叠加覆盖文件：
+
+```powershell
+docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
 
 服务默认监听 <http://localhost:8000>：
 
