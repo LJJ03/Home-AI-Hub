@@ -41,3 +41,9 @@ Authorization Header 或 Provider 凭据。Provider 配置只能在容器启动�
 
 各运行场景的模板选择和秘密注入规则见
 [环境变量分层与安全边界](environment.md)。
+
+## 验证边界
+
+当前 Runtime 与 Compose 已通过默认 pytest 的静态契约检查。由于本机没有 Docker、
+Podman、nerdctl 或 buildah，镜像构建、容器启动和端点动态运行验证尚未执行。静态门禁
+通过不等同于 Docker Runtime 已完成动态验证。

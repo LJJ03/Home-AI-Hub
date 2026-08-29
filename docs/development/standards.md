@@ -190,6 +190,10 @@ python -m pytest
 - 开发 override 不得被生产样例隐式继承，生产样例不得包含 bind mount 或 reload；
 - 默认测试只做静态 Compose 契约验证，不得依赖 Docker daemon。
 
+Runtime 质量门禁必须同时验证 Python 版本范围、SDK 禁入、秘密形状、Integration opt-in、
+默认网络阻断、冻结层依赖方向和文档事实一致性。门禁不得执行 Docker、真实数据库或真实
+LLM，也不得把未运行的 Integration Tests 或动态容器验证描述为通过。
+
 ## 变更质量门禁
 
 每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：
