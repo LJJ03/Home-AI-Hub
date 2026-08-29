@@ -1,0 +1,64 @@
+name: PostgreSQL Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-integration:
+    name: PostgreSQL 17 integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENVIRONMENT: test
+      APP_LOG_LEVEL: WARNING
+      DATABASE_URL: postgresql+asyncpg://home_ai_hub_ci:ci_integration_only@127.0.0.1:5432/home_ai_hub_ci_admin
+      SQLALCHEMY_ECHO: "false"
+      POOL_SIZE: "2"
+      MAX_OVERFLOW: "0"
+      DATABASE_HEALTHCHECK_TIMEOUT_SECONDS: "5"
+      LLM_PROVIDER: mock
+      LLM_DEFAULT_MODEL: mock-default
+      LLM_TIMEOUT_SECONDS: "5"
+      LLM_DEFAULT_TEMPERATURE: "0"
+      LLM_DEFAULT_MAX_TOKENS: "128"
+      LLM_INTEGRATION_ACKNOWLEDGE_COST: "false"
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: home_ai_hub_ci
+          POSTGRES_PASSWORD: ci_integration_only
+          POSTGRES_DB: home_ai_hub_ci_admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U home_ai_hub_ci -d home_ai_hub_ci_admin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install project test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Run PostgreSQL integration tests
+        run: python -m pytest --run-integration

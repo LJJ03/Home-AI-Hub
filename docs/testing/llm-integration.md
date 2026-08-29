@@ -59,6 +59,33 @@ python -m pytest --run-llm-integration
 不要把 API Key 写在命令中。应提前通过当前进程环境或受控 Secret 注入目标 Provider 的
 配置。`--run-llm-integration` 不会启用 PostgreSQL integration。
 
+### GitHub Actions 手动 Workflow
+
+`.github/workflows/llm-integration.yml` 只能通过 `workflow_dispatch` 手动触发，不响应
+push、pull request、fork pull request 或 schedule。操作者必须：
+
+1. 从 `provider` choice 中明确选择 `deepseek` 或 `openai`；
+2. 将布尔输入 `acknowledge_cost` 明确设为 `true`；
+3. 通过名为 `llm-integration` 的 GitHub protected environment 完成人工审批。
+
+仓库管理员应在该 protected environment 中配置 required reviewers，并分别配置：
+
+- Secret：`DEEPSEEK_API_KEY` 或 `OPENAI_API_KEY`；
+- Variable：对应的 `DEEPSEEK_BASE_URL` / `OPENAI_BASE_URL`；
+- Variable：对应的 `DEEPSEEK_DEFAULT_MODEL` / `OPENAI_DEFAULT_MODEL`。
+
+每次运行只进入被选 Provider 的专属 job，只向该 job 注入对应配置，不要求另一 Provider
+的 Secret。成本未确认或配置缺失时会在测试前 fail closed；不会回退到 Mock、自动切换
+Provider 或自动 retry。测试命令仅为：
+
+```console
+python -m pytest --run-llm-integration
+```
+
+Workflow 不传入 `--run-integration`，不打印 Secret、Authorization Header、Prompt、完整
+Response、完整 Chunk 或供应商错误体。该 Workflow 已定义但真实测试仍未运行，也未产生
+费用；未运行不得描述为通过。
+
 ## 运行前置条件
 
 每一个真实 LLM 测试必须具有 `llm_integration` marker，并且以下全局条件同时满足：
@@ -147,8 +174,9 @@ snapshot。失败必须通过统一安全异常边界呈现。
 - 默认 CI 只能执行 `python -m pytest`；
 - 不向默认 CI 注入真实 Provider 密钥；
 - 不在默认 CI 设置成本确认；
-- PostgreSQL integration 可作为独立受控任务运行；
-- 真实 LLM integration 必须是受保护、人工授权、可审计的单独任务；
+- PostgreSQL integration 由独立 workflow 执行，不响应 pull request；
+- 真实 LLM integration 由仅限手动触发、受 protected environment 保护的独立 workflow
+  执行；
 - 真实测试任务不得因失败自动切换 Provider 或重试；
 - 测试报告和构建日志必须经过敏感信息审查。
 

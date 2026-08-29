@@ -119,6 +119,11 @@ GitHub Actions 默认离线 CI 会在每次 `push` 和 `pull request` 使用 Pyt
 Docker daemon。依赖安装阶段可能访问 Python 包仓库；测试执行阶段由项目 Network Gate
 阻断公网 DNS 和 Socket，同时保留 TestClient/asyncio 所需的 loopback。
 
+PostgreSQL Integration 使用独立 workflow，可在 `main` push 或手动触发时启动临时
+PostgreSQL 17；真实 LLM Integration 则只能手动触发，并受成本确认与 GitHub protected
+environment 审批约束。两个 Integration Workflows 都不属于默认 CI，其定义存在不代表
+测试已经运行或通过。
+
 PostgreSQL integration 使用独立开关：
 
 ```bash

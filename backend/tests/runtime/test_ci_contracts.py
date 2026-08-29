@@ -148,7 +148,7 @@ def test_ci_documentation_matches_the_implemented_default_scope() -> None:
     assert "测试执行阶段" in default_tests
     assert "不运行 PostgreSQL Integration" in default_tests
     assert "不运行真实 LLM Integration" in default_tests
-    assert "Step 7" in default_tests
+    assert "Integration Workflows 已独立定义" in default_tests
     assert "动态运行验证尚未执行" in runtime
     assert "PostgreSQL Integration 已在默认 CI 运行" not in documentation
     assert "真实 LLM Integration 已在默认 CI 运行" not in documentation

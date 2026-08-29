@@ -1,0 +1,145 @@
+name: Manual Real LLM Integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Real provider to test
+        required: true
+        type: choice
+        options:
+          - deepseek
+          - openai
+      acknowledge_cost:
+        description: I understand this run can incur provider charges
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  authorize-cost:
+    name: Require explicit cost acknowledgement
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reject unacknowledged billable execution
+        if: ${{ inputs.acknowledge_cost != true }}
+        run: |
+          echo "::error::Explicit cost acknowledgement is required."
+          exit 1
+      - name: Accept acknowledged billable execution
+        if: ${{ inputs.acknowledge_cost == true }}
+        run: echo "Explicit cost acknowledgement accepted."
+
+  deepseek-integration:
+    name: DeepSeek real-provider integration
+    if: ${{ inputs.acknowledge_cost == true && inputs.provider == 'deepseek' }}
+    needs: authorize-cost
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: llm-integration
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENVIRONMENT: test
+      APP_LOG_LEVEL: WARNING
+      DATABASE_URL: postgresql+asyncpg://llm_test:llm_test@127.0.0.1:5432/llm_test
+      SQLALCHEMY_ECHO: "false"
+      POOL_SIZE: "2"
+      MAX_OVERFLOW: "0"
+      DATABASE_HEALTHCHECK_TIMEOUT_SECONDS: "3"
+      LLM_PROVIDER: deepseek
+      LLM_DEFAULT_MODEL: ${{ vars.DEEPSEEK_DEFAULT_MODEL }}
+      LLM_TIMEOUT_SECONDS: "30"
+      LLM_CONNECT_TIMEOUT_SECONDS: "10"
+      LLM_READ_TIMEOUT_SECONDS: "30"
+      LLM_STREAM_TIMEOUT_SECONDS: "30"
+      LLM_DEFAULT_TEMPERATURE: "0"
+      LLM_DEFAULT_MAX_TOKENS: "16"
+      LLM_INTEGRATION_ACKNOWLEDGE_COST: "true"
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      DEEPSEEK_BASE_URL: ${{ vars.DEEPSEEK_BASE_URL }}
+      DEEPSEEK_DEFAULT_MODEL: ${{ vars.DEEPSEEK_DEFAULT_MODEL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Validate selected Provider configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DEEPSEEK_API_KEY" || { echo "::error::Missing DEEPSEEK_API_KEY."; exit 1; }
+          test -n "$DEEPSEEK_BASE_URL" || { echo "::error::Missing DEEPSEEK_BASE_URL."; exit 1; }
+          test -n "$DEEPSEEK_DEFAULT_MODEL" || { echo "::error::Missing DEEPSEEK_DEFAULT_MODEL."; exit 1; }
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install project test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Run selected real-provider integration tests
+        run: python -m pytest --run-llm-integration
+
+  openai-integration:
+    name: OpenAI real-provider integration
+    if: ${{ inputs.acknowledge_cost == true && inputs.provider == 'openai' }}
+    needs: authorize-cost
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: llm-integration
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      APP_ENVIRONMENT: test
+      APP_LOG_LEVEL: WARNING
+      DATABASE_URL: postgresql+asyncpg://llm_test:llm_test@127.0.0.1:5432/llm_test
+      SQLALCHEMY_ECHO: "false"
+      POOL_SIZE: "2"
+      MAX_OVERFLOW: "0"
+      DATABASE_HEALTHCHECK_TIMEOUT_SECONDS: "3"
+      LLM_PROVIDER: openai
+      LLM_DEFAULT_MODEL: ${{ vars.OPENAI_DEFAULT_MODEL }}
+      LLM_TIMEOUT_SECONDS: "30"
+      LLM_CONNECT_TIMEOUT_SECONDS: "10"
+      LLM_READ_TIMEOUT_SECONDS: "30"
+      LLM_STREAM_TIMEOUT_SECONDS: "30"
+      LLM_DEFAULT_TEMPERATURE: "0"
+      LLM_DEFAULT_MAX_TOKENS: "16"
+      LLM_INTEGRATION_ACKNOWLEDGE_COST: "true"
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL }}
+      OPENAI_DEFAULT_MODEL: ${{ vars.OPENAI_DEFAULT_MODEL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - name: Validate selected Provider configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$OPENAI_API_KEY" || { echo "::error::Missing OPENAI_API_KEY."; exit 1; }
+          test -n "$OPENAI_BASE_URL" || { echo "::error::Missing OPENAI_BASE_URL."; exit 1; }
+          test -n "$OPENAI_DEFAULT_MODEL" || { echo "::error::Missing OPENAI_DEFAULT_MODEL."; exit 1; }
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install project test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Run selected real-provider integration tests
+        run: python -m pytest --run-llm-integration

@@ -199,6 +199,12 @@ LLM，也不得把未运行的 Integration Tests 或动态容器验证描述为�
 secrets、传入 Integration 开关、启动 Compose 或启用真实 Provider。依赖安装网络与测试
 执行网络必须分开描述，测试执行仍由项目 Network Gate 保持离线。
 
+PostgreSQL Integration Workflow 不得响应 pull request，必须使用临时 PostgreSQL 17 和
+CI 专属凭据，且只能启用 `--run-integration`。真实 LLM Workflow 必须仅限手动触发，绑定
+protected environment、人工成本确认和单一 Provider 配置，只启用
+`--run-llm-integration`。两类 Workflow 不得共享 Integration 开关、Provider secrets 或
+自动 fallback/retry/routing 行为。
+
 ## 变更质量门禁
 
 每次影响 LLM Provider Layer 或 Chat API Layer 的变更至少检查：

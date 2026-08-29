@@ -22,6 +22,23 @@ cd backend
 python -m pytest --run-integration
 ```
 
+## GitHub Actions Workflow
+
+`.github/workflows/postgres-integration.yml` 不是默认 CI。它只允许在 `main` 分支 push 或
+通过 `workflow_dispatch` 手动触发，不响应普通或 fork pull request。Workflow 使用
+Python 3.13 和 Runner 生命周期内的临时 PostgreSQL 17 service，并执行：
+
+```console
+python -m pytest --run-integration
+```
+
+Service 使用明确的 CI 测试用户名、密码和管理数据库；测试 Session 仍由既有 fixture 创建
+随机隔离数据库并在结束时清理。Runner 销毁后 service 数据一并消失。它不连接开发或生产
+数据库，不运行真实 LLM，不配置 Provider API Key，Provider 固定为 `mock`，也不传入
+`--run-llm-integration`。
+
+Workflow 已定义但尚未在 GitHub Runner 实际运行；未运行不得描述为通过。
+
 测试会基于配置的 PostgreSQL Server 创建名称随机且经过格式校验的独立数据库，执行全部
 Alembic Migration，并在测试结束后强制清理。失败后的遗留数据库应作为异常情况人工审查，
 不得通过宽泛脚本删除未知数据库。

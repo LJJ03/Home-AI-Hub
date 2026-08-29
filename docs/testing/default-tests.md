@@ -38,7 +38,9 @@ python -m pytest
 - 不产生供应商费用。
 
 Dockerfile 和 Compose 只接受静态契约检查。当前本机的 Docker 动态 build/run 仍未执行。
-Integration Workflows 留待 Step 7 单独设计；默认 CI 不承担其职责。
+PostgreSQL 与真实 LLM Integration Workflows 已独立定义，但默认 CI 不运行 Integration
+Workflows，也不获得其服务、成本授权或 secrets。Workflow 定义存在不代表 Integration
+已经运行或通过。
 
 ## 安全语义
 

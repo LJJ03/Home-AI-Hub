@@ -95,3 +95,8 @@ Docker 专属字段。不要省略 `--env-file`，也不要把 Docker 模板复�
 - 示例中的本地数据库密码仅是明确的非生产占位符，使用前必须替换；
 - 真实 Provider 配置必须通过当前进程或受控 Secret 注入；
 - 配置错误不得触发自动 fallback、retry 或 Provider routing。
+
+GitHub 手动 LLM Integration 使用 `llm-integration` protected environment：API Key 保存为
+Environment Secret，Base URL 和默认模型保存为 Environment Variable。每个 Provider job
+只接收自身配置；默认 CI、PostgreSQL Workflow、pull request 和 fork pull request 均不得
+获得这些值。
