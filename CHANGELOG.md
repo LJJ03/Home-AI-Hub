@@ -24,18 +24,31 @@
 - 默认测试的 Mock、零真实 API Key、Integration opt-in 和网络阻断语义；
 - Phase 3–6 冻结边界没有生产代码回归。
 
+### Runtime verification passed
+
+- 云服务器 Docker Engine 与 Docker Compose 可用；
+- Docker image dynamic build/run 通过，Python `3.13.15`、UID `10001` 非 root 已验证；
+- Compose 中 PostgreSQL 17、Redis 8 和 Backend healthy；
+- Migration container code `0`，`alembic_version=20260826_0001`；
+- `/health`、`/ready`、`/version`、Mock Chat JSON 和 Mock Chat SSE 通过；
+- GitHub remote 配置、`main` push 和 `v0.6.0` tag push 通过。
+
+### Blocked
+
+- GitHub 默认 CI 的 Runner execution / Default Offline CI：GitHub account billing lock，job 未启动；
+- GitHub PostgreSQL Integration Workflow execution / PostgreSQL Integration CI：GitHub account billing lock，job 未启动；
+- 该阻塞属于外部账号状态，不得记为 Workflow `Passed`；解除 Billing Lock 后必须重新触发。
+
 ### Not Run
 
-- Docker image dynamic build/run 和非 root 动态验证；
-- Docker Compose config/up、Migration container 与 endpoint smoke；
-- GitHub 默认 CI 的 Runner execution；
-- GitHub PostgreSQL Integration Workflow execution；
 - GitHub Manual LLM Integration Workflow execution；
 - Real DeepSeek/OpenAI Integration；
 - 生产 Secret Manager、反向代理 SSE 和 image digest promotion 验证。
 
+Real LLM Cost：`0`。没有配置或运行真实 OpenAI/DeepSeek Key。
+
 当前状态为 **Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
-上述未运行项不得描述为通过；当前不得创建 `v0.7.0` tag。
+GitHub Actions Billing Lock 和上述未运行项尚未解除；当前不得创建 `v0.7.0` tag。
 
 ## [v0.6.0] — Phase 6 Freeze baseline
 
