@@ -1,4 +1,4 @@
-"""Static contracts for the Phase 7 release decision and its evidence."""
+"""Static contracts for frozen Phase 7 and pending Phase 8 release evidence."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 RELEASE_GATE = PROJECT_ROOT / "docs/operations/release-gate.md"
+PHASE_8_RELEASE_GATE = PROJECT_ROOT / "docs/operations/phase8-release-gate.md"
 CHANGELOG = PROJECT_ROOT / "CHANGELOG.md"
 ADR = PROJECT_ROOT / "docs/adr/0001-runtime-release-baseline.md"
 DEFAULT_CI = PROJECT_ROOT / ".github/workflows/ci.yml"
@@ -45,8 +46,51 @@ def _run_commands(path: Path) -> tuple[str, ...]:
 
 def test_release_gate_artifacts_exist() -> None:
     assert RELEASE_GATE.is_file()
+    assert PHASE_8_RELEASE_GATE.is_file()
     assert CHANGELOG.is_file()
     assert ADR.is_file()
+
+
+def test_phase_8_release_gate_records_scope_evidence_and_pending_status() -> None:
+    release_gate = _source(PHASE_8_RELEASE_GATE)
+
+    assert "当前状态：**Freeze Review Pending**" in release_gate
+    for step in range(1, 7):
+        assert f"| {step} |" in release_gate
+    assert "| 7 |" in release_gate
+    assert "`ac11520`" in release_gate
+    assert "Default Offline CI" in release_gate
+    assert "PostgreSQL Integration CI" in release_gate
+    assert "Manual Real LLM Integration：`Not Run`" in release_gate
+    assert "Real LLM Cost：`0`" in release_gate
+    assert "Phase 8 尚未 Freeze" in release_gate
+    assert "当前不得创建新 tag" in release_gate
+    assert "Phase 8 已冻结" not in release_gate
+
+
+def test_phase_8_freeze_review_checklist_is_complete() -> None:
+    release_gate = _source(PHASE_8_RELEASE_GATE)
+
+    for required_check in (
+        "Git working tree clean",
+        "Default Offline CI 在 Step 7 当前 commit",
+        "PostgreSQL Integration CI 在 Step 7 当前 commit",
+        "本地 Python 3.13",
+        "20260901_0002",
+        "Phase 3–7 冻结边界",
+        "既有无状态 Chat API 契约未改变",
+        "独立 Conversation API 契约已完整记录",
+        "Real LLM Integration 保持 `Not Run`",
+        "Real LLM Cost 为 `0`",
+        "真实 API Key",
+        "Dockerfile、Compose topology 与 GitHub workflow",
+        "Manual LLM workflow deployment",
+        "Phase 8 Implementation Step 1–7",
+        "独立 Freeze Review 已通过",
+    ):
+        assert required_check in release_gate
+
+    assert release_gate.count("- [ ]") == 15
 
 
 def test_release_gate_defines_evidence_statuses() -> None:

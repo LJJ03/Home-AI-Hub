@@ -11,8 +11,9 @@ Phase 8 Step 5 adds a separate HTTP boundary documented in
 docs/api/conversations.md without changing these application contracts or the
 Phase 5 stateless Chat API. Phase 8 Step 6 hardens offline, integration, API,
 architecture, and documentation quality gates without changing application
-behavior. Real LLM integration was not run and the provider cost for these steps
-is zero. Phase 8 is not frozen.
+behavior. Step 7 prepares release evidence and Freeze Review documentation only.
+Real LLM integration was not run and the provider cost for these steps is zero.
+Phase 8 is not frozen.
 
 ## Application boundaries
 
@@ -64,3 +65,7 @@ behind `--run-integration` and uses only MockProvider; it never authorizes real 
 network access. Cross-layer AST gates keep Domain and Application independent of
 infrastructure, prevent Provider reverse dependencies, and preserve the original
 stateless Chat Completions contract.
+
+Both Default Offline CI and PostgreSQL Integration CI passed on Step 6 commit
+`ac11520`. Step 7 changes require new current-commit Runner evidence before the
+independent Phase 8 Freeze Review.

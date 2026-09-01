@@ -22,6 +22,10 @@ There is no persistent SSE endpoint. Create-turn requests accept only content an
 an optional idempotency_key. They do not accept streaming, Provider selection,
 model options, system messages, tool calls, user identity, or authentication data.
 
+Phase 8 Implementation Step 1–6 is complete. Step 7 only prepares documentation,
+release evidence, and the Freeze Review checklist; it does not change this API.
+Phase 8 is not frozen.
+
 ## Pagination
 
 Conversation listing uses offset and limit. The response includes items, offset,
@@ -66,3 +70,7 @@ The explicit PostgreSQL suite adds a production-wiring test that composes the re
 application lifespan, SQLAlchemy Unit of Work and migrated schema with MockProvider.
 It validates the API persistence path without contacting a supplier or incurring
 LLM cost.
+
+Default Offline CI and PostgreSQL Integration CI passed for Step 6 commit
+`ac11520`. Step 7 must be committed and validated again on GitHub Runner before a
+separate Freeze Review. Real LLM Integration remains `Not Run`; cost is `0`.

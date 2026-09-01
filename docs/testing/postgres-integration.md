@@ -96,6 +96,7 @@ Lifespan 与 Dependency Wiring、真实 SQLAlchemy Unit of Work/Repository、升
 - API、Application Service、Unit of Work 与 Repository 的真实组合能够协同工作；
 - 不访问 DeepSeek/OpenAI、不需要真实 API Key、费用为 `0`。
 
-该测试不会在默认 `python -m pytest` 中运行。Step 6 提交后必须在 GitHub Runner 重新执行
-Default Offline CI 与 PostgreSQL Integration CI；之前 revision 的通过证据不能替代当前
-revision 的验证。
+该测试不会在默认 `python -m pytest` 中运行。Step 6 commit `ac11520` 已在 GitHub Runner
+通过 Default Offline CI 与 PostgreSQL Integration CI。Step 7 文档提交后仍必须针对新的
+当前 commit 重新执行两个 Workflow；之前 revision 的通过证据不能替代 Freeze Review 的
+当前 revision 验证。

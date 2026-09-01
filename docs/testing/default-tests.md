@@ -85,6 +85,10 @@ Phase 8 Step 6 在既有 Domain、Application、Persistence 与 API 测试之上
 
 这些测试不修改 API 契约，不需要真实 API Key，不调用真实 Provider，也不产生费用。
 
+Step 6 commit `ac11520` 已在真实 GitHub Runner 通过 Default Offline CI 与 PostgreSQL
+Integration CI。Step 7 文档提交后必须为新的当前 commit 重跑两项 Workflow；在取得结果
+前，Phase 8 只能保持 `Freeze Review Pending`。
+
 ## 环境契约门禁
 
 Runtime Contract Tests 会验证四份受版本控制模板：

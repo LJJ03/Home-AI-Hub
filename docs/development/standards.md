@@ -4,8 +4,9 @@
 
 本规范适用于 Phase 5 Freeze 之后以及 Phase 6 Adapter 冻结基线之上的所有后端开发。
 Phase 6 已正式冻结，Git 基线为 `v0.6.0`；Phase 7 已通过 Release Gate 并以 `v0.7.0`
-冻结。Phase 8 当前进行 Conversation Testing Strategy / Quality Gate Hardening，尚未
-Freeze。关键词“必须”“不得”表示架构门禁，不能以开发便利或供应商兼容为由绕过。
+冻结。Phase 8 Step 1–6 已完成，当前只进行 Documentation / Release Gate / Freeze
+Preparation，尚未 Freeze。关键词“必须”“不得”表示架构门禁，不能以开发便利或供应商
+兼容为由绕过。
 
 ## 基本原则
 

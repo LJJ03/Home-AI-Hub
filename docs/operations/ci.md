@@ -42,6 +42,8 @@ Phase 7 的 Default Offline CI 与 PostgreSQL Integration CI 证据关联 commit
 Manual LLM 审批路径证据关联 commit `2fe129e`。后续 Release Gate 记录仍应保存对应 run
 URL、触发方式和时间，并保持日志无秘密、Prompt 或模型正文。Phase 7 Release Gate 当前
 状态为 `Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。Phase 8 Step 6
-提交后须为新 revision 重跑 Default Offline CI 与 PostgreSQL Integration CI。
+commit `ac11520` 已重新取得 Default Offline CI 与 PostgreSQL Integration CI 的 Runner
+`Passed` 证据。Step 7 文档提交后必须再次为新的当前 revision 重跑这两个 Workflow，
+然后才能进入 Phase 8 Freeze Review。
 
 完整发布判定见 [Phase 7 Release Gate](release-gate.md)。

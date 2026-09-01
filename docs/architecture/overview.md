@@ -21,9 +21,9 @@ Phase 7 的 Runtime、环境模板、Compose、静态质量门禁、Docker 动�
 证据已齐，现已通过 `v0.7.0` 正式冻结。真实 LLM Integration 保持 `Not Run`，费用为 `0`。
 
 Phase 8 已完成 Conversation Domain、Persistence Schema、Repository/UoW、Application
-Service/Context Builder 与独立 Conversation API Boundary；当前只进行 Step 6 Testing
-Strategy / Quality Gate Hardening，尚未 Freeze。原有无状态 Chat Completions 不读取或写入
-Conversation Persistence。
+Service/Context Builder、独立 Conversation API Boundary 与 Step 6 Quality Gates；当前只
+进行 Step 7 文档、Release Gate 与 Freeze Preparation，尚未 Freeze。原有无状态 Chat
+Completions 不读取或写入 Conversation Persistence。
 
 Redis 目前只随 Docker Compose 启动，不参与应用逻辑。聊天历史、用户系统、RAG、Agent、
 Home Assistant 和前端仍不在当前范围。

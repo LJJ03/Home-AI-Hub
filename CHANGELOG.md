@@ -5,10 +5,14 @@
 
 ## [Unreleased] — Phase 8 Conversation Domain / Chat Persistence
 
-- Implementation Step 1–5 已完成：Domain、ORM/Migration、Repository/UoW、Application
+- Implementation Step 1–6 已完成：Domain、ORM/Migration、Repository/UoW、Application
   Service/Context Builder 与独立 Conversation API Boundary；
 - Step 6 增强跨层依赖、公开端点表面、无状态 Chat 回归和 Secret/Provider 隔离门禁；
 - 新增显式 PostgreSQL-backed Conversation API production-wiring test，使用 MockProvider；
+- Step 6 commit `ac11520` 的 Default Offline CI 与 PostgreSQL Integration CI 已在真实
+  GitHub Runner 通过；
+- Step 7 已准备文档、Release Evidence 与 15 项 Freeze Review checklist；Step 7 提交后的
+  当前 commit 仍须重新取得两项 Runner 证据；
 - 没有修改 Phase 3–7 冻结公共契约、Docker/Compose 或 GitHub workflow；
 - Phase 8 尚未 Freeze，不创建新 tag；`v0.7.0` 保持指向 `5b411cb` 且不得移动；
 - Real LLM Integration：`Not Run`；Real LLM Cost：`0`。

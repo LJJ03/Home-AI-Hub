@@ -14,9 +14,10 @@ Phase 7 的 Docker 动态验证、Default Offline CI、PostgreSQL Integration CI
 安全审批路径均已取得证据，现已冻结；annotated tag `v0.7.0` 已发布并固定指向
 `5b411cb`，不得移动、删除或重建。真实 LLM Integration 仍为 `Not Run`，费用为 `0`。
 
-Phase 8 Conversation Domain / Chat Persistence 已完成 Implementation Step 1–5；当前只进行
-Step 6 Testing Strategy and Quality Gate Hardening，尚未 Freeze。现有无状态 Chat API 保持
-不变，持久化 Conversation 能力通过独立 `/api/v1/conversations` API 提供。
+Phase 8 Conversation Domain / Chat Persistence 已完成 Implementation Step 1–6；Step 6
+commit `ac11520` 的 Default Offline CI 与 PostgreSQL Integration CI 均已通过。当前只进行
+Step 7 Documentation、Release Gate Update 与 Freeze Preparation，尚未 Freeze。现有无状态
+Chat API 保持不变，持久化 Conversation 能力通过独立 `/api/v1/conversations` API 提供。
 
 ## Docker 启动
 
@@ -189,6 +190,7 @@ docker、test 和 production sample 四类 example 模板；生产秘密必须�
 - [环境变量分层与安全边界](docs/operations/environment.md)
 - [CI 与 Integration Workflows](docs/operations/ci.md)
 - [Phase 7 Release Gate](docs/operations/release-gate.md)
+- [Phase 8 Release Gate / Freeze Review Checklist](docs/operations/phase8-release-gate.md)
 - [Runtime 与 Release Baseline ADR](docs/adr/0001-runtime-release-baseline.md)
 - [Changelog](CHANGELOG.md)
 - [LLM Provider 运维指南](docs/operations/llm-providers.md)
@@ -198,8 +200,8 @@ docker、test 和 production sample 四类 example 模板；生产秘密必须�
 
 ## 当前未实现范围
 
-Phase 6 没有改变 Chat API、ChatService、LLMService、Provider Interface 或 Persistence
-Layer 公共契约，也没有实现数据库聊天存储、聊天历史、Conversation/Message/User ORM
-模型、认证、JWT、Redis 逻辑、RAG、Embeddings、向量数据库、文件上传、多模态、
+Phase 8 已新增独立 Conversation Persistence 与非流式 Conversation API，但没有修改既有
+Chat API、ChatService、LLMService 或 Provider Interface 公共契约。当前仍未实现持久化
+SSE、User/Auth/JWT、Redis 业务逻辑、RAG、Embeddings、向量数据库、文件上传、多模态、
 WebSocket、Vue、Home Assistant、Agent、Tool/Function Calling、MCP、自动 Provider
 fallback/routing/retry、成本统计或内容安全策略。

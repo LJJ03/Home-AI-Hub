@@ -8,7 +8,7 @@
 - `v0.7.0`：**已发布并固定指向 `5b411cb`**；
 - Real LLM Integration：**Not Run**；
 - Real LLM Cost：**0**；
-- Phase 8 implementation：**Step 1–5 已完成，Step 6 Testing/Quality Gate 进行中，尚未 Freeze**。
+- Phase 8 implementation：**Step 1–6 已完成，Step 7 Freeze Preparation 进行中，尚未 Freeze**。
 
 本文保存 Phase 8 实现前批准的 Conversation Domain 与 Chat Persistence 架构边界；实现
 产物位于独立代码、Migration、API 和测试文件中。原 Entry Criteria 已满足：GitHub Billing
@@ -393,6 +393,8 @@ Phase 8 不得：
 Conversation Domain 是下一层合理架构，它能在不破坏无状态 Chat API 和 LLM Provider
 边界的前提下，为未来有状态聊天及更高层能力提供稳定基础。
 
-原 Entry Criteria 已满足，Phase 8 Implementation Step 1–5 已按本设计完成；当前只执行
-Step 6 Testing Strategy / Quality Gate Hardening。Phase 8 尚未 Freeze，也不得提前进入
-Step 7。Real LLM 继续保持 `Not Run`，Cost 为 `0`；`v0.7.0` 保持不可变。
+原 Entry Criteria 已满足，Phase 8 Implementation Step 1–6 已按本设计完成；当前只执行
+Step 7 Documentation、Release Gate Update 与 Freeze Preparation。Step 6 commit `ac11520`
+已取得 Default Offline CI 与 PostgreSQL Integration CI 证据，但 Step 7 提交后仍须重跑当前
+revision。Phase 8 尚未 Freeze，Real LLM 继续保持 `Not Run`，Cost 为 `0`；`v0.7.0`
+保持不可变。完整 checklist 见 [Phase 8 Release Gate](../operations/phase8-release-gate.md)。
