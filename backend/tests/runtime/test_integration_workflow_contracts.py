@@ -254,7 +254,8 @@ def test_integration_workflow_documentation_matches_the_implemented_scope() -> N
     assert "--run-integration" in postgres_doc
     assert "不是默认 CI" in postgres_doc
     assert "不运行真实 LLM" in postgres_doc
-    assert "未运行" in postgres_doc
+    assert "Phase 7 已取得该 Workflow 在真实 GitHub Runner 通过的证据" in postgres_doc
+    assert "后续 Schema 变更仍须重新运行" in postgres_doc
     assert "workflow_dispatch" in llm_doc
     assert "protected environment" in llm_doc
     assert "acknowledge_cost" in llm_doc

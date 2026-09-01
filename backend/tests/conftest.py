@@ -24,6 +24,7 @@ from app.core.config import Settings
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 ALEMBIC_CONFIG_PATH = BACKEND_ROOT / "alembic.ini"
+PHASE_7_MIGRATION_REVISION = "20260826_0001"
 DATABASE_NAME_PATTERN = re.compile(r"^home_ai_hub_test_[0-9a-f]{32}$")
 _NETWORK_BLOCK_MESSAGE = "External network access is forbidden in default tests"
 _LLM_COST_ACKNOWLEDGEMENT = "LLM_INTEGRATION_ACKNOWLEDGE_COST"
@@ -355,10 +356,11 @@ def integration_database_url() -> Iterator[str]:
 
 @pytest.fixture(scope="session")
 def migrated_database_url(integration_database_url: str) -> str:
-    """Apply every Alembic migration to the isolated test database."""
+    """Upgrade the isolated database from the Phase 7 baseline to head."""
 
     alembic_config = Config(str(ALEMBIC_CONFIG_PATH))
     alembic_config.attributes["database_url"] = integration_database_url
+    command.upgrade(alembic_config, PHASE_7_MIGRATION_REVISION)
     command.upgrade(alembic_config, "head")
     return integration_database_url
 
