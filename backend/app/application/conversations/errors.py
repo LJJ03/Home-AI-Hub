@@ -26,6 +26,30 @@ class ConversationNotFoundError(ConversationApplicationError):
         )
 
 
+class ConversationConflictError(ConversationApplicationError):
+    """Represent an expected write conflict without leaking domain internals."""
+
+    def __init__(
+        self,
+        *,
+        code: str = "conversation_conflict",
+        message: str = "Conversation state conflicts with this operation",
+    ) -> None:
+        super().__init__(message, code=code)
+
+
+class ConversationPersistenceUnavailableError(ConversationApplicationError):
+    """Represent a temporary persistence outage at the application boundary."""
+
+    code = "conversation_persistence_unavailable"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Conversation persistence is temporarily unavailable",
+            code=self.code,
+        )
+
+
 class ConversationGenerationError(ConversationApplicationError):
     """Sanitized failure returned when model generation does not complete."""
 

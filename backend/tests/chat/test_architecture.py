@@ -453,6 +453,11 @@ def test_public_http_route_paths_and_methods_are_stable() -> None:
         "/ready": frozenset({"GET"}),
         "/version": frozenset({"GET"}),
         "/api/v1/chat/completions": frozenset({"POST"}),
+        "/api/v1/conversations": frozenset({"GET", "POST"}),
+        "/api/v1/conversations/{conversation_id}": frozenset({"GET"}),
+        "/api/v1/conversations/{conversation_id}/messages": frozenset({"GET"}),
+        "/api/v1/conversations/{conversation_id}/turns": frozenset({"POST"}),
+        "/api/v1/conversations/{conversation_id}/archive": frozenset({"POST"}),
     }
     api_source = "\n".join(
         path.read_text(encoding="utf-8")

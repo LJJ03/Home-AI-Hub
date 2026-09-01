@@ -14,8 +14,10 @@ from app.application.conversations.dto import (
 )
 from app.application.conversations.errors import (
     ConversationApplicationError,
+    ConversationConflictError,
     ConversationGenerationError,
     ConversationNotFoundError,
+    ConversationPersistenceUnavailableError,
 )
 from app.application.conversations.ports import ConversationLLMService
 from app.application.conversations.repositories import (
@@ -38,10 +40,12 @@ __all__ = (
     "ConversationChatResult",
     "ConversationChatService",
     "ConversationCommandService",
+    "ConversationConflictError",
     "ConversationContextBuilder",
     "ConversationGenerationError",
     "ConversationLLMService",
     "ConversationNotFoundError",
+    "ConversationPersistenceUnavailableError",
     "ConversationPage",
     "ConversationQueryService",
     "ConversationRepository",

@@ -12,6 +12,7 @@ from app.domain.conversations import (
     ConversationStatus,
     Message,
     MessageRole,
+    TurnStatus,
 )
 
 
@@ -172,8 +173,11 @@ class ConversationChatResult:
     turn_id: UUID
     request_id: str
     answer: str = field(repr=False)
+    user_message: MessageView
+    assistant_message: MessageView
     provider_name: str
     model_name: str
     finish_reason: str
     usage: TokenUsageView
+    status: TurnStatus
     completed_at: datetime

@@ -20,6 +20,7 @@ from app.application.conversations.dto import (
     TokenUsageView,
 )
 from app.application.conversations.errors import (
+    ConversationConflictError,
     ConversationGenerationError,
     ConversationNotFoundError,
 )
@@ -27,7 +28,9 @@ from app.application.conversations.ports import ConversationLLMService
 from app.application.conversations.unit_of_work import ConversationUnitOfWork
 from app.domain.conversations import (
     Conversation,
+    ConversationArchivedError,
     ConversationTurn,
+    IdempotencyConflictError,
     Message,
     TokenUsage as DomainTokenUsage,
     TurnNotFoundError,
@@ -167,10 +170,21 @@ class ConversationChatService:
         command: ConversationChatCommand,
     ) -> ConversationChatResult:
         request_id = command.request_id or uuid4().hex
-        turn_id, user_message = await self._start_pending_turn(
-            command=command,
-            request_id=request_id,
-        )
+        try:
+            turn_id, user_message = await self._start_pending_turn(
+                command=command,
+                request_id=request_id,
+            )
+        except ConversationArchivedError:
+            raise ConversationConflictError(
+                code="conversation_archived",
+                message="Archived conversations cannot accept new turns",
+            ) from None
+        except IdempotencyConflictError:
+            raise ConversationConflictError(
+                code="idempotency_conflict",
+                message="The idempotency key is already in use",
+            ) from None
         bounded_context_limit = self._context_builder.bounded_limit(
             command.context_limit
         )
@@ -249,7 +263,7 @@ class ConversationChatService:
                 total_tokens=response_usage.total_tokens,
             )
         )
-        await self._complete_turn(
+        completed_turn = await self._complete_turn(
             conversation_id=command.conversation_id,
             turn_id=turn_id,
             content=response.text,
@@ -264,6 +278,10 @@ class ConversationChatService:
             turn_id=turn_id,
             request_id=request_id,
             answer=response.text,
+            user_message=MessageView.from_domain(user_message),
+            assistant_message=MessageView.from_domain(
+                self._assistant_message(completed_turn)
+            ),
             provider_name=response.provider_name,
             model_name=response.model_name,
             finish_reason=response.finish_reason.value,
@@ -278,6 +296,7 @@ class ConversationChatService:
                     response_usage.total_tokens if response_usage is not None else None
                 ),
             ),
+            status=completed_turn.status,
             completed_at=completed_at,
         )
 
@@ -332,7 +351,7 @@ class ConversationChatService:
         finish_reason: str,
         usage: DomainTokenUsage | None,
         completed_at: datetime,
-    ) -> None:
+    ) -> ConversationTurn:
         async with self._unit_of_work_factory() as unit_of_work:
             conversation = await unit_of_work.conversation_repository.get_for_update(
                 conversation_id
@@ -350,9 +369,10 @@ class ConversationChatService:
             )
             await unit_of_work.conversation_repository.save(conversation)
             await unit_of_work.turn_repository.save(turn)
-            assert turn.assistant_message is not None
-            await unit_of_work.message_repository.add(turn.assistant_message)
+            assistant_message = self._assistant_message(turn)
+            await unit_of_work.message_repository.add(assistant_message)
             await unit_of_work.commit()
+            return turn
 
     async def _best_effort_fail(
         self,
@@ -422,3 +442,10 @@ class ConversationChatService:
             if turn.id == turn_id:
                 return turn
         raise TurnNotFoundError("Turn is not part of the conversation")
+
+    @staticmethod
+    def _assistant_message(turn: ConversationTurn) -> Message:
+        assistant_message = turn.assistant_message
+        if assistant_message is None:
+            raise ConversationGenerationError(code="conversation_state_invalid")
+        return assistant_message

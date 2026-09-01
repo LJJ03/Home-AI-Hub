@@ -6,20 +6,15 @@ import pytest
 
 from app.application.conversations import (
     ArchiveConversationCommand,
+    ConversationChatCommand,
+    ConversationChatService,
     ConversationCommandService,
+    ConversationConflictError,
     ConversationNotFoundError,
     ConversationQueryService,
     CreateConversationCommand,
 )
-from app.application.conversations import (
-    ConversationChatCommand,
-    ConversationChatService,
-)
-from app.domain.conversations import (
-    Conversation,
-    ConversationArchivedError,
-    ConversationStatus,
-)
+from app.domain.conversations import Conversation, ConversationStatus
 from tests.application.conversations.fakes import (
     FakeLLMService,
     FakeUnitOfWorkFactory,
@@ -79,7 +74,7 @@ async def test_archived_conversation_rejects_chat_before_llm_call() -> None:
         clock=lambda: NOW + timedelta(minutes=2),
     )
 
-    with pytest.raises(ConversationArchivedError):
+    with pytest.raises(ConversationConflictError) as captured:
         await service.complete(
             ConversationChatCommand(
                 conversation_id=conversation.id,
@@ -87,8 +82,41 @@ async def test_archived_conversation_rejects_chat_before_llm_call() -> None:
             )
         )
 
+    assert captured.value.code == "conversation_archived"
     assert llm.requests == []
     assert factory.store.conversations[conversation.id].messages == ()
+
+
+@pytest.mark.asyncio
+async def test_duplicate_idempotency_key_is_an_application_conflict() -> None:
+    conversation = Conversation.create(created_at=NOW)
+    conversation.start_turn(
+        user_content="existing",
+        request_id="existing-request",
+        idempotency_key="duplicate-key",
+        created_at=NOW + timedelta(seconds=1),
+    )
+    factory = FakeUnitOfWorkFactory()
+    factory.store.seed(conversation)
+    llm = FakeLLMService(factory)
+    service = ConversationChatService(
+        unit_of_work_factory=factory,
+        llm_service=llm,
+        clock=lambda: NOW + timedelta(seconds=2),
+    )
+
+    with pytest.raises(ConversationConflictError) as captured:
+        await service.complete(
+            ConversationChatCommand(
+                conversation_id=conversation.id,
+                user_content="duplicate",
+                request_id="new-request",
+                idempotency_key="duplicate-key",
+            )
+        )
+
+    assert captured.value.code == "idempotency_conflict"
+    assert llm.requests == []
 
 
 @pytest.mark.asyncio

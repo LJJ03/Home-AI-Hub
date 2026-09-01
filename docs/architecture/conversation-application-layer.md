@@ -7,8 +7,10 @@ implements conversation commands, queries, bounded context construction, and
 non-streaming persistent chat orchestration. It does not add an HTTP endpoint or
 change the Phase 5 stateless Chat Completions JSON/SSE contract.
 
-Phase 8 Step 5 API Boundary has not started. Real LLM integration was not run and
-the provider cost for this step is zero.
+Phase 8 Step 5 adds a separate HTTP boundary documented in
+docs/api/conversations.md without changing these application contracts or the
+Phase 5 stateless Chat API. Phase 8 Step 6 has not started. Real LLM integration
+was not run and the provider cost for these steps is zero.
 
 ## Application boundaries
 
