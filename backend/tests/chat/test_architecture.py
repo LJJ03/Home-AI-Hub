@@ -40,6 +40,7 @@ POSTGRESQL_TEST_PATHS = (
     TESTS_ROOT / "test_database.py",
     TESTS_ROOT / "test_migrations.py",
     TESTS_ROOT / "test_repository.py",
+    TESTS_ROOT / "test_conversation_api_integration.py",
 )
 
 
@@ -587,6 +588,7 @@ def test_postgresql_tests_are_explicit_opt_in_integration_tests() -> None:
         "test_ready_with_postgresql",
         "test_alembic_upgrade_reaches_head",
         "test_base_repository_crud",
+        "test_conversation_api_uses_production_wiring_with_postgresql",
     }
 
     all_marked_integration_tests = {

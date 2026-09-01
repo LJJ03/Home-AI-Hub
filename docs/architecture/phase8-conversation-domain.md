@@ -2,18 +2,18 @@
 
 ## 文档状态
 
-- 类型：Architecture Design Only；
+- 类型：已批准的 Architecture Design Baseline（本文档本身不包含实现）；
 - 日期：2026-08-30；
-- Phase 7：**Freeze Pending**；
-- `v0.7.0`：**尚未创建**；
+- Phase 7：**Freeze**；
+- `v0.7.0`：**已发布并固定指向 `5b411cb`**；
 - Real LLM Integration：**Not Run**；
 - Real LLM Cost：**0**；
-- Phase 8 implementation：**不建议进入**。
+- Phase 8 implementation：**Step 1–5 已完成，Step 6 Testing/Quality Gate 进行中，尚未 Freeze**。
 
-本文只定义未来 Conversation Domain 与 Chat Persistence 的架构边界，不包含生产代码、
-ORM Model、Alembic Migration、API、测试或运行配置实现。进入实现前，必须先解除 GitHub
-Billing Lock，并取得 Default Offline CI 与 PostgreSQL Integration Workflow 的真实 Runner
-通过证据，完成 Phase 7 正式 Freeze。
+本文保存 Phase 8 实现前批准的 Conversation Domain 与 Chat Persistence 架构边界；实现
+产物位于独立代码、Migration、API 和测试文件中。原 Entry Criteria 已满足：GitHub Billing
+Lock 已解除，Default Offline CI、PostgreSQL Integration Workflow 与 Phase 7 Freeze 均已
+取得证据。后续实现仍必须逐 Step 进行并遵守本文边界。
 
 ## 1. 目标与非目标
 
@@ -117,7 +117,7 @@ Factory 或 Bootstrap。不得持久化供应商原始 JSON、HTTP Request/Respo
 
 未来 Migration 继续由独立 Migration Container 执行，Backend 不自行迁移。Phase 8 不
 改变 Compose 拓扑、`/ready`、默认 Mock Provider、默认离线测试或 Integration opt-in
-策略。Phase 7 当前仍为 Freeze Pending。
+策略。Phase 7 已冻结；Phase 8 扩展不得改变其 Runtime、CI 或 Release Gate 公共边界。
 
 ## 5. Conversation Domain
 
@@ -386,14 +386,13 @@ Phase 8 不得：
   WebSocket 或前端；
 - 自动 retry、fallback、降级或 Provider routing；
 - 运行真实 LLM 或配置真实 OpenAI/DeepSeek Key；
-- 修改 Phase 7 状态、创建 `v0.7.0` 或进入 Phase 8 implementation。
+- 移动、删除或重建 `v0.7.0`，或绕过已批准的 Phase 8 Step 边界。
 
 ## 17. 结论
 
 Conversation Domain 是下一层合理架构，它能在不破坏无状态 Chat API 和 LLM Provider
 边界的前提下，为未来有状态聊天及更高层能力提供稳定基础。
 
-当前**不建议进入 Phase 8 implementation**。必须先解除 GitHub Billing Lock，取得
-Default Offline CI 与 PostgreSQL Integration Workflow 的真实 Runner 通过证据，并完成
-Phase 7 正式 Freeze。Real LLM 继续保持 `Not Run`，Cost 为 `0`；本设计不会改变 Phase 7
-`Freeze Pending` 状态。
+原 Entry Criteria 已满足，Phase 8 Implementation Step 1–5 已按本设计完成；当前只执行
+Step 6 Testing Strategy / Quality Gate Hardening。Phase 8 尚未 Freeze，也不得提前进入
+Step 7。Real LLM 继续保持 `Not Run`，Cost 为 `0`；`v0.7.0` 保持不可变。

@@ -3,9 +3,9 @@
 ## 适用范围
 
 本规范适用于 Phase 5 Freeze 之后以及 Phase 6 Adapter 冻结基线之上的所有后端开发。
-Phase 6 已正式冻结，Git 基线为 `v0.6.0`；Phase 7 当前是 Release Gate
-`Freeze Pending`。关键词“必须”“不得”表示架构门禁，不能以开发便利或供应商兼容为由
-绕过。
+Phase 6 已正式冻结，Git 基线为 `v0.6.0`；Phase 7 已通过 Release Gate 并以 `v0.7.0`
+冻结。Phase 8 当前进行 Conversation Testing Strategy / Quality Gate Hardening，尚未
+Freeze。关键词“必须”“不得”表示架构门禁，不能以开发便利或供应商兼容为由绕过。
 
 ## 基本原则
 
@@ -278,9 +278,9 @@ protected environment、人工成本确认和单一 Provider 配置，只启用
 
 ## Freeze 规则
 
-Phase 3、Phase 4、Phase 5 与 Phase 6 已冻结。Phase 7 因 Docker 动态验证和 GitHub
-Runner 执行证据缺失，当前只能保持 `Freeze Pending`。后续阶段不得用 Runtime、CI 或
-Release 工作绕过既有冻结边界；对 Phase 3–6 只允许：
+Phase 3、Phase 4、Phase 5、Phase 6 与 Phase 7 已冻结。Phase 7 的 Docker 动态验证、
+GitHub Runner 与审批路径证据已齐，annotated tag `v0.7.0` 不得移动、删除或重建。后续阶段
+不得用 Runtime、CI 或 Release 工作绕过既有冻结边界；对 Phase 3–7 只允许兼容性扩展：
 
 - 新增 Provider Adapter，并在 Bootstrap 显式注册；
 - 新增调用 `LLMService` 的上层模块；

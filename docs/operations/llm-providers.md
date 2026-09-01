@@ -5,9 +5,9 @@
 本文说明 Phase 6 已实现的 `mock`、DeepSeek 和 OpenAI Provider 如何配置、部署和安全
 运维。它不改变 Phase 4 的公共 Provider 契约，也不改变 Phase 5 Chat API。
 
-Phase 6 当前状态是 **Freeze Pending / 待正式 pytest 验证**。生产启用真实 Provider 前，
-必须先在项目 Python 3.13 环境完成默认全量测试，并在受控环境完成目标 Provider 的显式
-Integration Tests。
+Phase 6 当前状态是 **Freeze**，默认全量测试已在项目 Python 3.13 环境完成。真实
+DeepSeek/OpenAI Integration 仍为 `Not Run`、费用为 `0`；生产启用真实 Provider 前仍必须
+在受控环境取得明确授权、成本确认并完成目标 Provider 的显式 Integration Tests。
 
 ## Provider 选择
 
@@ -147,4 +147,3 @@ readiness 抖动，也不能通过健康检查持续消耗额度。
 8. 验证 Chat API 公共 JSON/SSE 契约没有因 Provider 改变。
 9. 验证 `/ready` 仍只表达应用与 PostgreSQL readiness。
 10. 记录部署选择和回滚步骤，但不得记录密钥。
-

@@ -243,7 +243,8 @@ Response、供应商 JSON 或异常。
 `/ready` 仍只检查应用和 PostgreSQL，不远程调用模型。前端、语音终端和未来 Home
 Assistant 上层模块应调用本稳定 API，不应直接依赖具体 Provider。
 
-Phase 6 的代码和静态门禁已完成，但正式默认 pytest 尚未在项目 Python 3.13 环境执行
-成功；当前状态为 **Phase 6 Freeze Pending / 待正式 pytest 验证**。部署配置与测试说明
-分别见 [LLM Provider 运维指南](../operations/llm-providers.md) 和
+Phase 6 的代码、静态门禁和 Python 3.13 默认全量 pytest 已完成，当前状态为
+**Phase 6 — Real LLM Provider Adapters Freeze**。真实 Provider Integration 仍为显式
+opt-in 且 `Not Run`，不得描述为线上验证通过。部署配置与测试说明分别见
+[LLM Provider 运维指南](../operations/llm-providers.md) 和
 [LLM Integration 测试指南](../testing/llm-integration.md)。

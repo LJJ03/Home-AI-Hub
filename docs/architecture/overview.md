@@ -17,9 +17,13 @@ Phase 6 已在 Python 3.13 环境完成默认全量测试并正式冻结，Git �
 Provider Integration Tests 仍保持显式 opt-in 且尚未运行，不能描述为 Provider 已完成
 线上验证。
 
-Phase 7 已建立 Runtime、环境模板、Compose、静态质量门禁和分层 CI Workflows；但 Docker
-动态 build/run、Compose smoke 和 GitHub Runner 执行尚无证据。因此当前结论是
-**Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
+Phase 7 的 Runtime、环境模板、Compose、静态质量门禁、Docker 动态验证和分层 CI Runner
+证据已齐，现已通过 `v0.7.0` 正式冻结。真实 LLM Integration 保持 `Not Run`，费用为 `0`。
+
+Phase 8 已完成 Conversation Domain、Persistence Schema、Repository/UoW、Application
+Service/Context Builder 与独立 Conversation API Boundary；当前只进行 Step 6 Testing
+Strategy / Quality Gate Hardening，尚未 Freeze。原有无状态 Chat Completions 不读取或写入
+Conversation Persistence。
 
 Redis 目前只随 Docker Compose 启动，不参与应用逻辑。聊天历史、用户系统、RAG、Agent、
 Home Assistant 和前端仍不在当前范围。
@@ -171,7 +175,7 @@ Phase 6 的默认全量 pytest 已在 Python 3.13 环境通过并形成 `v0.6.0`
 DeepSeek/OpenAI Integration 仍未运行，未来只能在明确授权、密钥齐全和成本确认后手动
 执行；这不改变默认离线 Freeze 基线，也不得被误写为真实 Provider 线上验证通过。
 
-### Phase 7 Runtime、Docker、CI 与 Release Gate — Freeze Pending
+### Phase 7 Runtime、Docker、CI 与 Release Gate — Frozen
 
 - Backend Runtime 固定 Python 3.13、多阶段构建和非 root 用户；
 - 环境模板区分 local、Docker、test 与 production sample；
@@ -180,9 +184,9 @@ DeepSeek/OpenAI Integration 仍未运行，未来只能在明确授权、密钥�
 - Runtime、Environment、Compose、SDK Ban、Secret Hygiene、Freeze Regression 和 Release
   Gate Contract Tests 由默认 pytest 离线执行。
 
-Docker/Compose 动态验证和 GitHub Runner 执行仍为 `Not Run`，因此不得创建 `v0.7.0` 或
-声明 Phase 7 Freeze。证据分类、动态命令、Tag 和回滚规则见
-[Phase 7 Release Gate](../operations/release-gate.md)。
+Docker/Compose 动态验证、Default Offline CI、PostgreSQL Integration CI 与 Manual LLM
+安全审批路径均已取得证据。`v0.7.0` 已发布并固定指向 `5b411cb`；不得移动、删除或重建。
+证据分类、动态命令、Tag 和回滚规则见 [Phase 7 Release Gate](../operations/release-gate.md)。
 
 ## 文档权威关系
 

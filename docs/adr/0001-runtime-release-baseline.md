@@ -31,8 +31,11 @@ Phase 7 需要让同一代码基线能够被重复测试、构建、迁移和发
 受控路径。代价是静态契约通过不足以发布：Docker、Compose 和 GitHub Runner 必须提供独立
 动态证据，真实 Provider 验证还需要审批、秘密配置和成本承担。
 
-当前机器没有 Docker/Podman/nerdctl/buildah，三个 GitHub Workflows 也尚未在 Runner
-执行。因此当前结论是 **Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
+历史上，当前机器缺少 Docker/Podman/nerdctl/buildah，GitHub Actions 也曾受 Billing Lock
+阻塞；当时结论是 **Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
+随后 Docker 动态验证、Default Offline CI、PostgreSQL Integration CI 与 Manual LLM 安全
+审批路径均取得证据。当前状态：**Phase 7 Freeze**；annotated tag `v0.7.0` 已发布并固定
+指向 `5b411cb`。真实 LLM 仍为 `Not Run`，费用为 `0`。
 
 ## 冻结边界
 

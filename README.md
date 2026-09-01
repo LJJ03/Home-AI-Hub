@@ -10,10 +10,13 @@ Home AI Hub 是基于 Python 3.13、FastAPI 和 PostgreSQL 17 的后端项目。
 Phase 6 已在 Python 3.13 环境完成正式默认测试并冻结，Git 基线 Tag 为 `v0.6.0`。
 真实 DeepSeek/OpenAI Integration Tests 仍保持显式 opt-in，尚未运行时不得描述为通过。
 
-Phase 7 已建立 Git 基线、Backend Runtime 镜像、环境模板、Compose 拓扑、静态质量门禁和
-分层 GitHub Actions Workflows。当前 Release Gate 结论为 **Phase 7 — Runtime, Docker,
-CI and Release Gate Freeze Pending。** 本机没有可用容器引擎，GitHub Workflows 也尚未在
-Runner 上触发；这些动态门禁均为 `Not Run`，不得描述为通过，当前不得创建 `v0.7.0`。
+Phase 7 的 Docker 动态验证、Default Offline CI、PostgreSQL Integration CI 和 Manual LLM
+安全审批路径均已取得证据，现已冻结；annotated tag `v0.7.0` 已发布并固定指向
+`5b411cb`，不得移动、删除或重建。真实 LLM Integration 仍为 `Not Run`，费用为 `0`。
+
+Phase 8 Conversation Domain / Chat Persistence 已完成 Implementation Step 1–5；当前只进行
+Step 6 Testing Strategy and Quality Gate Hardening，尚未 Freeze。现有无状态 Chat API 保持
+不变，持久化 Conversation 能力通过独立 `/api/v1/conversations` API 提供。
 
 ## Docker 启动
 
@@ -44,6 +47,7 @@ docker compose --env-file .env.docker -f docker-compose.yml -f docker-compose.de
 - `GET /ready`：应用与 PostgreSQL 就绪检查，不探测 LLM；
 - `GET /version`：应用版本；
 - `POST /api/v1/chat/completions`：无状态 Chat Completions，支持 JSON 与 SSE。
+- `POST/GET /api/v1/conversations`：独立的持久化 Conversation API（当前只支持非流式 Turn）。
 
 停止服务：
 

@@ -9,8 +9,10 @@ change the Phase 5 stateless Chat Completions JSON/SSE contract.
 
 Phase 8 Step 5 adds a separate HTTP boundary documented in
 docs/api/conversations.md without changing these application contracts or the
-Phase 5 stateless Chat API. Phase 8 Step 6 has not started. Real LLM integration
-was not run and the provider cost for these steps is zero.
+Phase 5 stateless Chat API. Phase 8 Step 6 hardens offline, integration, API,
+architecture, and documentation quality gates without changing application
+behavior. Real LLM integration was not run and the provider cost for these steps
+is zero. Phase 8 is not frozen.
 
 ## Application boundaries
 
@@ -56,3 +58,9 @@ Default tests use test-only in-memory repositories, Unit of Work objects, and an
 LLM fake. They require no PostgreSQL instance, API key, Provider account, Docker
 daemon, or external network. PostgreSQL integration and real LLM integration
 remain explicit opt-in paths.
+
+Step 6 also collects a PostgreSQL-backed production-wiring API test. It remains
+behind `--run-integration` and uses only MockProvider; it never authorizes real LLM
+network access. Cross-layer AST gates keep Domain and Application independent of
+infrastructure, prevent Provider reverse dependencies, and preserve the original
+stateless Chat Completions contract.

@@ -324,13 +324,10 @@ Freeze 准备基线包含：
 
 当前已完成代码审查、语法检查、架构/SDK/敏感信息静态扫描，但正式 pytest 被环境阻塞。
 
-### Freeze 阻塞项
+### Freeze 状态
 
-1. 提供可用的项目 Python 3.13 环境；
-2. 安装 `.[test]`，包括 pytest、httpx、pydantic-settings 等项目依赖；
-3. 实际执行 `cd backend && python -m pytest`；
-4. 确认 Phase 3/4/5/6 默认回归全部通过并记录结果。
+项目已在 Python 3.13 环境安装 `.[test]` 并完成默认全量 pytest，Phase 3/4/5/6 默认回归
+已经记录。因此：**Phase 6 — Real LLM Provider Adapters 已冻结（Freeze）。**
 
-在上述阻塞项完成前，结论只能是：
-
-**Phase 6 Freeze Pending / 待正式 pytest 验证。**
+真实 DeepSeek/OpenAI Integration 仍为 `Not Run`，费用为 `0`；这不得被描述为真实 Provider
+线上验证通过，也不改变已验证的默认离线 Freeze 基线。

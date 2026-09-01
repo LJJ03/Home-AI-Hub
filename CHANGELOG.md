@@ -3,6 +3,16 @@
 本项目按里程碑记录可验证的架构与运行能力。`Not Run` 和 `Skipped` 不会被记录为
 `Passed`。
 
+## [Unreleased] — Phase 8 Conversation Domain / Chat Persistence
+
+- Implementation Step 1–5 已完成：Domain、ORM/Migration、Repository/UoW、Application
+  Service/Context Builder 与独立 Conversation API Boundary；
+- Step 6 增强跨层依赖、公开端点表面、无状态 Chat 回归和 Secret/Provider 隔离门禁；
+- 新增显式 PostgreSQL-backed Conversation API production-wiring test，使用 MockProvider；
+- 没有修改 Phase 3–7 冻结公共契约、Docker/Compose 或 GitHub workflow；
+- Phase 8 尚未 Freeze，不创建新 tag；`v0.7.0` 保持指向 `5b411cb` 且不得移动；
+- Real LLM Integration：`Not Run`；Real LLM Cost：`0`。
+
 ## [v0.7.0] — Phase 7 Runtime / Docker / CI / Release Gate（Freeze）
 
 ### Added
@@ -66,8 +76,8 @@
 Real LLM Integration：`Not Run`。Real LLM Cost：`0`。没有配置或运行真实
 OpenAI/DeepSeek Key。
 
-当前状态：**Freeze（`v0.7.0`）**。Phase 8 Architecture Design 已完成，Phase 8
-Implementation 仍为 `Not Started`。
+该 Release 的状态：**Freeze（`v0.7.0`）**。创建 `v0.7.0` 时，Phase 8 Architecture
+Design 已完成、Implementation 尚未开始；当前开发进度记录在上方 `Unreleased` 段落。
 
 历史状态（已结束）：Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。
 

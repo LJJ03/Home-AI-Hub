@@ -38,8 +38,10 @@ job 注入一套 Provider 配置；缺失配置在 pytest 前 fail closed。没�
 - 只有在未来取得明确真实调用授权、成本确认并配置目标
   Provider 后，才可以批准 deployment。
 
-运行证据关联 commit `2fe129e`。后续 Release Gate 记录仍应保存对应 run URL、触发方式和
-时间，并保持日志无秘密、Prompt 或模型正文。Phase 7 Release Gate 当前状态为
-`Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。
+Phase 7 的 Default Offline CI 与 PostgreSQL Integration CI 证据关联 commit `5b411cb`；
+Manual LLM 审批路径证据关联 commit `2fe129e`。后续 Release Gate 记录仍应保存对应 run
+URL、触发方式和时间，并保持日志无秘密、Prompt 或模型正文。Phase 7 Release Gate 当前
+状态为 `Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。Phase 8 Step 6
+提交后须为新 revision 重跑 Default Offline CI 与 PostgreSQL Integration CI。
 
 完整发布判定见 [Phase 7 Release Gate](release-gate.md)。

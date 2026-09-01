@@ -17,12 +17,10 @@ DEFAULT_CI = PROJECT_ROOT / ".github/workflows/ci.yml"
 POSTGRES_CI = PROJECT_ROOT / ".github/workflows/postgres-integration.yml"
 LLM_CI = PROJECT_ROOT / ".github/workflows/llm-integration.yml"
 
-PENDING_CONCLUSION = (
+HISTORICAL_PENDING_CONCLUSION = (
     "Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。"
 )
-FROZEN_CONCLUSION = (
-    "Phase 7 — Runtime, Docker, CI and Release Gate 已冻结（Freeze）。"
-)
+FROZEN_STATUS = "Passed / Freeze"
 
 
 def _source(path: Path) -> str:
@@ -81,9 +79,18 @@ def test_release_gate_documents_docker_and_compose_smoke_commands() -> None:
     assert "curl --fail http://localhost:8000/version" in release_gate
 
 
-def test_current_dynamic_and_runner_checks_are_recorded_as_not_run() -> None:
+def test_release_gate_records_current_dynamic_and_runner_evidence() -> None:
     release_gate = _source(RELEASE_GATE)
 
+    assert "当前云服务器验证记录（Passed）" in release_gate
+    assert "Default Offline CI | `5b411cb` | `Passed`" in release_gate
+    assert "PostgreSQL Integration CI | `5b411cb` | `Passed`" in release_gate
+    assert "DeepSeek job 的最终状态为\n`Cancelled`" in release_gate
+    assert "OpenAI job 为 `Skipped`" in release_gate
+    assert "Real LLM Cost：`0`" in release_gate
+    assert "`v0.7.0` 已创建、推送并指向 commit `5b411cb`" in release_gate
+
+    # Historical Not Run evidence remains auditable but is not the current state.
     assert (
         "Docker dynamic verification: Not Run — "
         "Docker/Podman/nerdctl/buildah unavailable on this machine."
@@ -96,19 +103,21 @@ def test_current_dynamic_and_runner_checks_are_recorded_as_not_run() -> None:
     assert "Real LLM Integration: Not Run" in release_gate
 
 
-def test_phase_7_remains_pending_without_dynamic_evidence() -> None:
+def test_phase_7_is_frozen_and_preserves_its_historical_pending_record() -> None:
     release_gate = _source(RELEASE_GATE)
     changelog = _source(CHANGELOG)
     adr = _source(ADR)
 
-    assert PENDING_CONCLUSION in release_gate
-    assert PENDING_CONCLUSION in changelog
-    assert PENDING_CONCLUSION in adr
-    assert FROZEN_CONCLUSION not in "\n".join((release_gate, changelog, adr))
-    assert "Pending 状态不得创建或移动 `v0.7.0`" in release_gate
+    assert FROZEN_STATUS in release_gate
+    assert "该 Release 的状态：**Freeze（`v0.7.0`）**" in changelog
+    assert "当前状态：**Phase 7 Freeze**" in adr
+    assert HISTORICAL_PENDING_CONCLUSION in release_gate
+    assert HISTORICAL_PENDING_CONCLUSION in changelog
+    assert HISTORICAL_PENDING_CONCLUSION in adr
+    assert "`v0.7.0` 不得移动、删除或重建" in release_gate
 
 
-def test_changelog_records_phase_7_scope_without_false_runtime_claims() -> None:
+def test_changelog_records_phase_7_scope_and_current_runtime_evidence() -> None:
     changelog = _source(CHANGELOG)
 
     for capability in (
@@ -123,11 +132,10 @@ def test_changelog_records_phase_7_scope_without_false_runtime_claims() -> None:
         "Release Gate",
     ):
         assert capability in changelog
-    assert "Docker image dynamic build/run" in changelog
-    assert "GitHub 默认 CI 的 Runner execution" in changelog
+    assert "Docker image dynamic build/run 通过" in changelog
+    assert "Default Offline CI 已在真实 GitHub Runner 上执行并通过" in changelog
+    assert "PostgreSQL Integration CI 已在真实 GitHub Runner 上执行并通过" in changelog
     assert "Real DeepSeek/OpenAI Integration" in changelog
-    assert "Docker dynamic verification 已通过" not in changelog
-    assert "GitHub workflows 已在 Runner 上通过" not in changelog
     assert "Real LLM Integration 已通过" not in changelog
 
 

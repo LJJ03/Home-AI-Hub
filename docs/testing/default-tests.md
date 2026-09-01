@@ -37,10 +37,10 @@ python -m pytest
 - 不启动 Docker、Compose、PostgreSQL、Redis 或真实 Provider；
 - 不产生供应商费用。
 
-Dockerfile 和 Compose 只接受静态契约检查。当前本机的 Docker 动态 build/run 仍未执行。
-PostgreSQL 与真实 LLM Integration Workflows 已独立定义，但默认 CI 不运行 Integration
-Workflows，也不获得其服务、成本授权或 secrets。Workflow 定义存在不代表 Integration
-已经运行或通过。
+Dockerfile 和 Compose 在默认测试中只接受静态契约检查，不要求本机 Docker daemon。
+Phase 7 的 Docker 动态验证已在独立云服务器通过；该历史运行证据不改变默认 pytest 的
+离线职责。PostgreSQL 与真实 LLM Integration Workflows 已独立定义；
+默认 CI 不运行 Integration Workflows，也不获得其服务、成本授权或 secrets。
 
 ## 安全语义
 
@@ -71,6 +71,19 @@ PostgreSQL 与真实 LLM 测试拥有不同开关，启用其中一个不得隐�
 
 这些测试只读取项目文件并检查 AST、TOML 和 YAML，不调用 Docker CLI 或 daemon。Docker
 动态 build/run 与端点 Smoke Test 必须单独执行并单独记录，不能由静态测试结果代替。
+
+## Phase 8 Conversation 质量门禁
+
+Phase 8 Step 6 在既有 Domain、Application、Persistence 与 API 测试之上增加集中回归门禁：
+
+- 逐层验证 Domain、Application、Persistence Adapter、HTTP Adapter 与 Provider 的依赖方向；
+- 固化 `/health`、`/ready`、`/version`、无状态 Chat Completions 和六个 Conversation
+  endpoint 的公开路由表面；
+- 明确拒绝向既有 `ChatRequest` 注入 `conversation_id`；
+- 禁止 Conversation 边界泄漏 Provider 原始对象、传输细节、凭据或持久化 SSE；
+- 收集 PostgreSQL-backed Conversation API production-wiring test，但默认保持 skip。
+
+这些测试不修改 API 契约，不需要真实 API Key，不调用真实 Provider，也不产生费用。
 
 ## 环境契约门禁
 

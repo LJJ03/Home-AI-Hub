@@ -60,4 +60,9 @@ provides the SQLAlchemy Unit of Work adapter and the lifespan-owned LLMService.
 Default API contract tests replace all Conversation services with test doubles.
 They require no PostgreSQL server, API key, Provider account, Docker daemon, or
 external network. Real LLM integration remains explicit opt-in and was not run for
-Step 5.
+Steps 5–6.
+
+The explicit PostgreSQL suite adds a production-wiring test that composes the real
+application lifespan, SQLAlchemy Unit of Work and migrated schema with MockProvider.
+It validates the API persistence path without contacting a supplier or incurring
+LLM cost.

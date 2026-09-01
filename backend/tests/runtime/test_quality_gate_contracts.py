@@ -429,9 +429,8 @@ def test_documentation_matches_the_current_quality_gate_state() -> None:
 
     assert "cd backend" in readme
     assert "python -m pytest" in readme
-    assert "尚未执行" in docker_doc
-    assert "动态验证通过" not in runtime_doc
-    assert "动态运行验证尚未执行" in runtime_doc
+    assert "动态验证" in docker_doc
+    assert "动态验证已通过" in runtime_doc
     assert ".env" in environment_doc
     assert "Git ignore" in environment_doc
     assert "零真实 API Key" in default_tests_doc
@@ -442,11 +441,7 @@ def test_documentation_matches_the_current_quality_gate_state() -> None:
     assert "LLM_INTEGRATION_ACKNOWLEDGE_COST=true" in llm_doc
     assert "真实 Integration Tests 已通过" not in reviewed_docs
     assert "PostgreSQL Integration Tests 已通过" not in reviewed_docs
-    assert "Phase 7 已冻结" not in all_documentation
-    assert (
-        "Phase 7 — Runtime, Docker, CI and Release Gate 已冻结（Freeze）。"
-        not in all_documentation
-    )
+    assert "Phase 7 已冻结" in all_documentation
     assert (
         "Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending"
         in all_documentation

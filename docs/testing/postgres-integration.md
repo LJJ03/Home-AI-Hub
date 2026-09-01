@@ -84,3 +84,18 @@ PostgreSQL Integration 还会验证：
 - `get_for_update` 在并发事务中保持 Conversation 行锁，直到持锁事务结束。
 
 这些测试不调用 LLM、不需要 Provider Key，也不会把 ORM Model 暴露给上层。
+
+## Phase 8 Conversation API production wiring
+
+Step 6 新增一项带 `integration` marker 的端到端边界测试。它使用 `create_app` 的生产
+Lifespan 与 Dependency Wiring、真实 SQLAlchemy Unit of Work/Repository、升级至
+`20260901_0002` 的隔离 PostgreSQL Schema，以及确定性的 `MockProvider`，验证：
+
+- Conversation 创建、非流式 Turn 完成、Message 顺序读取与归档；
+- archived Conversation 对新 Turn 的安全 `409` 映射；
+- API、Application Service、Unit of Work 与 Repository 的真实组合能够协同工作；
+- 不访问 DeepSeek/OpenAI、不需要真实 API Key、费用为 `0`。
+
+该测试不会在默认 `python -m pytest` 中运行。Step 6 提交后必须在 GitHub Runner 重新执行
+Default Offline CI 与 PostgreSQL Integration CI；之前 revision 的通过证据不能替代当前
+revision 的验证。

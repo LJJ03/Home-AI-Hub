@@ -14,6 +14,12 @@ PostgreSQL Integration CI 均已取得真实 GitHub Runner 通过证据，Manual
 fail-closed 与 protected environment 审批路径也已验证。Freeze Review 已通过，annotated
 tag `v0.7.0` 已创建、推送并指向 commit `5b411cb`。
 
+Phase 8 当前开发附录：Implementation Step 1–5 已完成，Step 6 正在加固默认离线、
+PostgreSQL Integration、API 回归和架构门禁。该工作不移动 Phase 7 的 `v0.7.0`，不创建
+新 tag，也不表示 Phase 8 已 Freeze。Step 6 提交后，当前 revision 的 Default Offline CI
+与 PostgreSQL Integration CI 必须在 GitHub Runner 重新执行；历史 Phase 7 证据不能替代
+Phase 8 当前 revision 的验证。Real LLM Integration 继续为 `Not Run`，费用为 `0`。
+
 ## 状态分类
 
 | 状态 | 语义 | 是否满足对应硬门禁 |
