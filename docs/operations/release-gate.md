@@ -8,9 +8,11 @@ Release Gate 为 Runtime、Docker、环境分层、Compose、CI 和 Integration 
 
 当前结论：**Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
 
-Docker 动态验证已在云服务器完成并通过。GitHub remote、`main` 和 `v0.6.0` tag 已推送，
-但 GitHub Actions job 因账号 Billing Lock 未能启动，因此仍不满足正式 Freeze 的硬门禁，
-也不得创建 `v0.7.0` tag。
+Docker 动态验证已在云服务器完成并通过。GitHub remote、`main` 和 `v0.6.0` tag 已推送。
+此前阻止 GitHub Actions job 启动的账号 Billing Lock 已解除，Default Offline CI 与
+PostgreSQL Integration CI 均已取得真实 GitHub Runner 通过证据，Manual LLM Workflow 的
+fail-closed 与 protected environment 审批路径也已验证。Phase 7 仍须经过单独的 Freeze
+Review 才能正式冻结；本次证据更新不得创建 `v0.7.0` tag。
 
 ## 状态分类
 
@@ -115,20 +117,30 @@ GitHub remote 发布记录（Passed）：
 
 GitHub Actions Runner Validation 当前记录：
 
-> Default Offline CI: Blocked by GitHub account billing lock.
+| Workflow / Gate | Commit | 当前状态 | 证据结论 |
+|---|---|---|---|
+| Default Offline CI | `2fe129e` | `Passed` | 已在真实 GitHub Runner 上成功执行 |
+| PostgreSQL Integration CI | `2fe129e` | `Passed` | PostgreSQL 17 Integration 已在真实 GitHub Runner 上成功执行 |
+| Manual LLM cost acknowledgement（未确认费用） | `2fe129e` | Expected `Failed` | 明确拒绝执行，验证费用确认 fail-closed |
+| Manual LLM cost acknowledgement（已确认费用） | `2fe129e` | `Passed` | 仅通过费用确认前置门禁 |
+| DeepSeek protected-environment job | `2fe129e` | Stopped at `Waiting for review` | 人工审批路径已验证，未批准 deployment，Provider 未运行 |
+| OpenAI protected-environment job | `2fe129e` | `Skipped` | 未选择 OpenAI，Provider 未运行 |
+| Real DeepSeek/OpenAI Integration | — | `Not Run` | 未配置或调用真实 Provider |
 
-> PostgreSQL Integration CI: Blocked by GitHub account billing lock.
+等待审批的 Manual LLM workflow 必须取消，不得点击 `Review deployments`，也不得批准
+deployment。证据截取时 DeepSeek job 停在 `Waiting for review`；取消动作只用于结束等待状态，
+不改变真实 LLM `Not Run` 的结论。Real LLM Cost：`0`。
 
-GitHub 显示的阻塞原因为：`The job was not started because your account is locked due to a billing issue.`
-两个 job 均未启动，因此不能记为 `Passed` 或测试失败；解除账号 Billing Lock 后必须重新触发。
+> Real LLM Integration: Not Run — no real Provider deployment was approved or executed.
 
-> Manual Real LLM Integration: Not Run.
+历史 Billing Lock 状态（Resolved）：
 
-> Real LLM Integration: Not Run — no authorized provider run was performed and no provider cost was incurred.
+> GitHub 曾显示：`The job was not started because your account is locked due to a billing issue.`
 
-> Real LLM Cost: 0.
+该外部账号阻塞已由 GitHub Support 解除。Billing Lock 期间的 run 没有启动，不计为测试
+失败；解除后重新触发的 Default Offline CI 和 PostgreSQL Integration CI 已提供当前有效证据。
 
-以下是已被 Billing Lock 诊断取代的 Step 8 历史记录，不代表当前 Runner 状态：
+以下是已被后续 Runner 证据取代的 Step 8 历史记录，不代表当前 Runner 状态：
 
 > GitHub Actions runtime execution: Not Run — workflows created but not triggered on GitHub Runner.
 
@@ -158,10 +170,11 @@ Phase 7 只有在以下硬条件都有 `Passed` 证据时才能正式 Freeze：
 8. Manual LLM Workflow 的安全审批路径得到验证；如不授权产生费用，真实调用继续明确记录
    为 `Not Run`，不得伪装为 Provider 已验证。
 
-任一硬门禁为 `Not Run`、`Skipped`、`Blocked` 或 `Failed` 时，状态必须保持
-`Freeze Pending`。Docker 动态门禁现已通过；当前 Default Offline CI 与 PostgreSQL
-Integration CI 被 GitHub 账号 Billing Lock 阻塞，Manual Real LLM Integration 未运行，
-因此只能保持 Pending。
+任一必需硬门禁为 `Not Run`、`Skipped`、`Blocked` 或 `Failed` 时，状态必须保持
+`Freeze Pending`。Docker 动态门禁、Default Offline CI、PostgreSQL Integration CI 和
+Manual LLM Workflow 安全审批路径现均已有动态证据。真实 LLM 调用不属于未授权情况下的
+Freeze 必要条件，继续记录为 `Not Run`、费用 `0`。完成本次证据文档、本地全量测试和独立
+Freeze Review 之前，Phase 7 仍保持 `Freeze Pending`。
 
 ## Tag 策略
 

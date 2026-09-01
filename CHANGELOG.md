@@ -33,22 +33,34 @@
 - `/health`、`/ready`、`/version`、Mock Chat JSON 和 Mock Chat SSE 通过；
 - GitHub remote 配置、`main` push 和 `v0.6.0` tag push 通过。
 
-### Blocked
+### GitHub Runner verification passed
 
-- GitHub 默认 CI 的 Runner execution / Default Offline CI：GitHub account billing lock，job 未启动；
-- GitHub PostgreSQL Integration Workflow execution / PostgreSQL Integration CI：GitHub account billing lock，job 未启动；
-- 该阻塞属于外部账号状态，不得记为 Workflow `Passed`；解除 Billing Lock 后必须重新触发。
+- GitHub account Billing Lock 已由 GitHub Support 解除；
+- Default Offline CI 已在真实 GitHub Runner 上执行并通过；
+- PostgreSQL Integration CI 已在真实 GitHub Runner 上执行并通过；
+- Manual Real LLM Integration 的费用确认 fail-closed 和 protected environment 人工审批路径已验证；
+- 授权费用确认后，DeepSeek job 停在 `Waiting for review`，OpenAI job 为 `Skipped`；
+- 等待审批的 workflow 已要求取消且不得批准 deployment，真实 Provider 未运行，费用为 `0`。
+
+### Historical blocker resolved
+
+- GitHub 默认 CI 的 Runner execution 曾因 Billing Lock 未启动；当前已由后续真实 Runner
+  `Passed` 证据取代；
+- GitHub Actions 曾因账号 Billing Lock 拒绝启动 job；该外部账号阻塞现已解除；
+- Billing Lock 期间的失败记录只代表 job 未启动，不代表 Workflow 或测试失败；
+- 解除后已重新触发并取得上述 Default Offline CI 与 PostgreSQL Integration CI 的真实 Runner 证据。
 
 ### Not Run
 
-- GitHub Manual LLM Integration Workflow execution；
 - Real DeepSeek/OpenAI Integration；
 - 生产 Secret Manager、反向代理 SSE 和 image digest promotion 验证。
 
-Real LLM Cost：`0`。没有配置或运行真实 OpenAI/DeepSeek Key。
+Real LLM Integration：`Not Run`。Real LLM Cost：`0`。没有配置或运行真实
+OpenAI/DeepSeek Key。
 
 当前状态为 **Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
-GitHub Actions Billing Lock 和上述未运行项尚未解除；当前不得创建 `v0.7.0` tag。
+GitHub Runner 硬门禁证据现已具备，但仍需单独执行 Phase 7 Freeze Review；本次证据更新不直接
+宣布 Freeze，当前不得创建 `v0.7.0` tag。
 
 ## [v0.6.0] — Phase 6 Freeze baseline
 
