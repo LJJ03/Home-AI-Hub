@@ -161,6 +161,15 @@ python -m pytest
 
 真实 PostgreSQL 测试继续使用既有 `--run-integration` 显式开关。
 
+Conversation Persistence 必须遵守以下边界：
+
+- Application 层只依赖纯 Python Repository/Unit of Work Protocol，不导入 SQLAlchemy；
+- SQLAlchemy Adapter 集中完成 Domain Entity 与 ORM Model 转换，不向上层返回 ORM；
+- Repository 方法只允许 `flush`，不得自行 `commit`；
+- 单个事务的 `commit`、`rollback` 和异常清理只能由 Conversation Unit of Work 控制；
+- Conversation 行锁必须通过显式 `get_for_update` 边界获取，不依赖隐式 ORM cascade；
+- Message Context 查询只返回已完成 Turn 的有界消息，不读取未完成 Chunk 或 Provider 原始载荷。
+
 真实 LLM 测试只能位于 `tests/integration/llm/`，必须具有 `llm_integration` marker，
 并同时要求：
 

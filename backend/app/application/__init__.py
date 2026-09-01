@@ -1,0 +1,1 @@
+"""Infrastructure-neutral application contracts."""

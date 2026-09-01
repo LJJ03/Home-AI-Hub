@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
@@ -164,6 +165,126 @@ class ConversationTurn:
         self._created_at = timestamp
         self._updated_at = timestamp
         self._completed_at: datetime | None = None
+
+    @classmethod
+    def rehydrate(
+        cls,
+        *,
+        turn_id: UUID,
+        conversation_id: UUID,
+        sequence: int,
+        user_message: Message,
+        assistant_message: Message | None,
+        request_id: str | None,
+        idempotency_key: str | None,
+        status: TurnStatus,
+        provider_name: str | None,
+        model_name: str | None,
+        finish_reason: str | None,
+        usage: TokenUsage | None,
+        safe_error_code: str | None,
+        created_at: datetime,
+        updated_at: datetime,
+        completed_at: datetime | None,
+    ) -> ConversationTurn:
+        """Restore one persisted turn through the normal transition rules."""
+
+        if not isinstance(status, TurnStatus):
+            raise InvalidDomainValueError("turn status must be TurnStatus")
+        normalized_created_at = as_utc(
+            created_at,
+            field_name="turn created_at",
+        )
+        normalized_updated_at = as_utc(
+            updated_at,
+            field_name="turn updated_at",
+        )
+        if normalized_updated_at < normalized_created_at:
+            raise InvalidDomainValueError("Turn time cannot move backwards")
+
+        turn = cls(
+            turn_id=turn_id,
+            conversation_id=conversation_id,
+            sequence=sequence,
+            user_message=user_message,
+            request_id=request_id,
+            idempotency_key=idempotency_key,
+            created_at=normalized_created_at,
+        )
+
+        if status is TurnStatus.PENDING:
+            if any(
+                value is not None
+                for value in (
+                    assistant_message,
+                    provider_name,
+                    model_name,
+                    finish_reason,
+                    usage,
+                    safe_error_code,
+                    completed_at,
+                )
+            ):
+                raise InvalidDomainValueError(
+                    "Pending turns cannot contain terminal result fields"
+                )
+            turn._updated_at = normalized_updated_at
+            return turn
+
+        if completed_at is None:
+            raise InvalidDomainValueError(
+                "Terminal turns must have a completed_at timestamp"
+            )
+        normalized_completed_at = as_utc(
+            completed_at,
+            field_name="turn completed_at",
+        )
+        if normalized_updated_at != normalized_completed_at:
+            raise InvalidDomainValueError(
+                "Terminal turn updated_at must equal completed_at"
+            )
+
+        if status is TurnStatus.COMPLETED:
+            if assistant_message is None:
+                raise TurnMessageConflictError(
+                    "Completed turns must contain an assistant message"
+                )
+            if safe_error_code is not None:
+                raise InvalidDomainValueError(
+                    "Completed turns cannot contain a safe error code"
+                )
+            turn._complete(
+                assistant_message=assistant_message,
+                provider_name=provider_name,
+                model_name=model_name,
+                finish_reason=finish_reason,
+                usage=usage,
+                completed_at=normalized_completed_at,
+            )
+            return turn
+
+        if assistant_message is not None or finish_reason is not None or usage is not None:
+            raise InvalidDomainValueError(
+                "Failed or cancelled turns cannot contain completion output"
+            )
+        if status is TurnStatus.FAILED:
+            turn._fail(
+                safe_error_code=safe_error_code,
+                provider_name=provider_name,
+                model_name=model_name,
+                completed_at=normalized_completed_at,
+            )
+            return turn
+
+        if any(
+            value is not None
+            for value in (provider_name, model_name, safe_error_code)
+        ):
+            raise InvalidDomainValueError(
+                "Cancelled turns cannot contain provider result fields"
+            )
+        turn._cancel(completed_at=normalized_completed_at)
+        return turn
 
     @property
     def id(self) -> UUID:
@@ -419,6 +540,124 @@ class Conversation:
             ),
         )
 
+    @classmethod
+    def rehydrate(
+        cls,
+        *,
+        conversation_id: UUID,
+        title: str | None,
+        status: ConversationStatus,
+        next_sequence: int,
+        created_at: datetime,
+        updated_at: datetime,
+        archived_at: datetime | None,
+        turns: Sequence[ConversationTurn],
+        messages: Sequence[Message],
+    ) -> Conversation:
+        """Restore a persisted aggregate after validating all ownership rules."""
+
+        if not isinstance(status, ConversationStatus):
+            raise InvalidDomainValueError(
+                "conversation status must be ConversationStatus"
+            )
+        normalized_created_at = as_utc(
+            created_at,
+            field_name="conversation created_at",
+        )
+        normalized_updated_at = as_utc(
+            updated_at,
+            field_name="conversation updated_at",
+        )
+        if normalized_updated_at < normalized_created_at:
+            raise InvalidDomainValueError("Conversation time cannot move backwards")
+
+        conversation = cls(
+            conversation_id=conversation_id,
+            title=title,
+            created_at=normalized_created_at,
+        )
+        if any(not isinstance(turn, ConversationTurn) for turn in turns):
+            raise InvalidDomainValueError("turns must contain ConversationTurn entities")
+        if any(not isinstance(message, Message) for message in messages):
+            raise InvalidDomainValueError("messages must contain Message entities")
+        ordered_turns = sorted(turns, key=lambda turn: turn.sequence)
+        ordered_messages = sorted(messages, key=lambda message: message.sequence)
+        if any(turn.conversation_id != conversation.id for turn in ordered_turns):
+            raise MessageOwnershipError(
+                "Every turn must belong to the restored conversation"
+            )
+        if any(
+            message.conversation_id != conversation.id
+            for message in ordered_messages
+        ):
+            raise MessageOwnershipError(
+                "Every message must belong to the restored conversation"
+            )
+
+        turn_sequences = [turn.sequence for turn in ordered_turns]
+        if turn_sequences != list(range(1, len(ordered_turns) + 1)):
+            raise MessageSequenceError("Turn sequences must be contiguous")
+        message_sequences = [message.sequence for message in ordered_messages]
+        if message_sequences != list(range(1, len(ordered_messages) + 1)):
+            raise MessageSequenceError("Message sequences must be contiguous")
+
+        aggregate_message_ids = {message.id for message in ordered_messages}
+        turn_message_ids = {
+            message.id for turn in ordered_turns for message in turn.messages
+        }
+        if aggregate_message_ids != turn_message_ids:
+            raise MessageOwnershipError(
+                "Conversation messages must exactly match the turn messages"
+            )
+        normalized_next_sequence = positive_sequence(
+            next_sequence,
+            field_name="conversation next_sequence",
+        )
+        if normalized_next_sequence != len(ordered_messages) + 1:
+            raise MessageSequenceError(
+                "Conversation next_sequence must follow the final message"
+            )
+
+        latest_entity_time = max(
+            (
+                *(turn.updated_at for turn in ordered_turns),
+                *(message.created_at for message in ordered_messages),
+                normalized_created_at,
+            )
+        )
+        if normalized_updated_at < latest_entity_time:
+            raise InvalidDomainValueError(
+                "Conversation updated_at cannot precede aggregate data"
+            )
+
+        normalized_archived_at: datetime | None = None
+        if status is ConversationStatus.ARCHIVED:
+            if archived_at is None:
+                raise InvalidDomainValueError(
+                    "Archived conversations must have archived_at"
+                )
+            normalized_archived_at = as_utc(
+                archived_at,
+                field_name="conversation archived_at",
+            )
+            if normalized_archived_at != normalized_updated_at:
+                raise InvalidDomainValueError(
+                    "Archived conversation updated_at must equal archived_at"
+                )
+        elif archived_at is not None:
+            raise InvalidDomainValueError(
+                "Active conversations cannot have archived_at"
+            )
+
+        conversation._status = status
+        conversation._updated_at = normalized_updated_at
+        conversation._archived_at = normalized_archived_at
+        conversation._turns = ordered_turns
+        conversation._messages = ordered_messages
+        conversation._next_turn_sequence = len(ordered_turns) + 1
+        conversation._next_message_sequence = normalized_next_sequence
+        return conversation
+
     @property
     def id(self) -> UUID:
         return self._id
@@ -442,6 +681,12 @@ class Conversation:
     @property
     def archived_at(self) -> datetime | None:
         return self._archived_at
+
+    @property
+    def next_sequence(self) -> int:
+        """Return the next conversation-wide message sequence."""
+
+        return self._next_message_sequence
 
     @property
     def turns(self) -> tuple[ConversationTurn, ...]:

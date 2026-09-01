@@ -69,3 +69,18 @@ Phase 8 Step 2 新增 Alembic revision `20260901_0002`，其直接父 revision �
 
 默认 `python -m pytest` 只执行上述 Schema 和 Migration 的静态契约测试，不连接数据库；
 真实约束验证仍只在显式 `--run-integration` 下运行。
+
+## Phase 8 Conversation Repository 验证
+
+Phase 8 Step 3 的 Repository Protocol 保持 SQLAlchemy-free；具体 Adapter 复用 Phase 3
+AsyncSession 生命周期，并由 Conversation Unit of Work 独占 commit/rollback。显式
+PostgreSQL Integration 还会验证：
+
+- Conversation、Turn、Message 的 add/get/save 与 Domain Entity 返回类型；
+- 归档状态保存、幂等键查询，以及重复 `request_id` 不承担幂等唯一性；
+- Message sequence 顺序、游标分页和仅包含 completed Turn 的有界 Context 查询；
+- Unit of Work commit、显式 rollback、未 commit 自动 rollback；
+- Repository 的 flush 对其他事务不可见，证明 Repository 不会自行 commit；
+- `get_for_update` 在并发事务中保持 Conversation 行锁，直到持锁事务结束。
+
+这些测试不调用 LLM、不需要 Provider Key，也不会把 ORM Model 暴露给上层。
