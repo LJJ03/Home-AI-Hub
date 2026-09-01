@@ -3,7 +3,7 @@
 本项目按里程碑记录可验证的架构与运行能力。`Not Run` 和 `Skipped` 不会被记录为
 `Passed`。
 
-## [Unreleased] — Phase 7 Freeze Pending
+## [v0.7.0] — Phase 7 Runtime / Docker / CI / Release Gate（Freeze）
 
 ### Added
 
@@ -39,8 +39,16 @@
 - Default Offline CI 已在真实 GitHub Runner 上执行并通过；
 - PostgreSQL Integration CI 已在真实 GitHub Runner 上执行并通过；
 - Manual Real LLM Integration 的费用确认 fail-closed 和 protected environment 人工审批路径已验证；
-- 授权费用确认后，DeepSeek job 停在 `Waiting for review`，OpenAI job 为 `Skipped`；
-- 等待审批的 workflow 已要求取消且不得批准 deployment，真实 Provider 未运行，费用为 `0`。
+- 授权费用确认后，DeepSeek job 曾停在 `Waiting for review`，随后已取消；OpenAI job 为
+  `Skipped`；
+- deployment 未获批准，真实 Provider 未运行，费用为 `0`。
+
+### Release
+
+- Annotated tag `v0.7.0` 已创建并推送至 `origin`；
+- `v0.7.0` 指向 commit `5b411cb`；
+- GitHub Runner、Docker Dynamic Verification 和本地 Release Gate 证据已齐；
+- 已发布 tag 不得移动、删除或重建。
 
 ### Historical blocker resolved
 
@@ -58,9 +66,10 @@
 Real LLM Integration：`Not Run`。Real LLM Cost：`0`。没有配置或运行真实
 OpenAI/DeepSeek Key。
 
-当前状态为 **Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
-GitHub Runner 硬门禁证据现已具备，但仍需单独执行 Phase 7 Freeze Review；本次证据更新不直接
-宣布 Freeze，当前不得创建 `v0.7.0` tag。
+当前状态：**Freeze（`v0.7.0`）**。Phase 8 Architecture Design 已完成，Phase 8
+Implementation 仍为 `Not Started`。
+
+历史状态（已结束）：Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。
 
 ## [v0.6.0] — Phase 6 Freeze baseline
 

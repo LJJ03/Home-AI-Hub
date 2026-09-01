@@ -32,13 +32,14 @@ job 注入一套 Provider 配置；缺失配置在 pytest 前 fail closed。没�
 - Default Offline CI 已在真实 GitHub Runner 上通过；
 - PostgreSQL Integration CI 已在真实 GitHub Runner 上通过；
 - Manual LLM Workflow 在未确认费用时按预期 fail closed；
-- 确认费用后，DeepSeek job 在 `llm-integration` protected environment 停在
-  `Waiting for review`，验证了人工审批路径；OpenAI job 为 `Skipped`；
+- 确认费用后，DeepSeek job 在 `llm-integration` protected environment 进入
+  `Waiting for review`，验证人工审批路径后已取消；OpenAI job 为 `Skipped`；
 - deployment 未获批准，真实 DeepSeek/OpenAI Integration 为 `Not Run`，费用为 `0`；
-- 等待审批的验证 run 应取消。只有在未来取得明确真实调用授权、成本确认并配置目标
+- 只有在未来取得明确真实调用授权、成本确认并配置目标
   Provider 后，才可以批准 deployment。
 
 运行证据关联 commit `2fe129e`。后续 Release Gate 记录仍应保存对应 run URL、触发方式和
-时间，并保持日志无秘密、Prompt 或模型正文。本次状态更新不宣布 Phase 7 Freeze。
+时间，并保持日志无秘密、Prompt 或模型正文。Phase 7 Release Gate 当前状态为
+`Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。
 
 完整发布判定见 [Phase 7 Release Gate](release-gate.md)。

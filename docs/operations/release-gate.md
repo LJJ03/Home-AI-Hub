@@ -6,13 +6,13 @@ Release Gate 为 Runtime、Docker、环境分层、Compose、CI 和 Integration 
 可审计的发布判定。它只接受实际执行证据，不用静态检查代替动态检查，也不把有意跳过的
 测试计为通过。
 
-当前结论：**Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。**
+当前结论：**Passed / Freeze（`v0.7.0`）**。
 
 Docker 动态验证已在云服务器完成并通过。GitHub remote、`main` 和 `v0.6.0` tag 已推送。
 此前阻止 GitHub Actions job 启动的账号 Billing Lock 已解除，Default Offline CI 与
 PostgreSQL Integration CI 均已取得真实 GitHub Runner 通过证据，Manual LLM Workflow 的
-fail-closed 与 protected environment 审批路径也已验证。Phase 7 仍须经过单独的 Freeze
-Review 才能正式冻结；本次证据更新不得创建 `v0.7.0` tag。
+fail-closed 与 protected environment 审批路径也已验证。Freeze Review 已通过，annotated
+tag `v0.7.0` 已创建、推送并指向 commit `5b411cb`。
 
 ## 状态分类
 
@@ -119,17 +119,16 @@ GitHub Actions Runner Validation 当前记录：
 
 | Workflow / Gate | Commit | 当前状态 | 证据结论 |
 |---|---|---|---|
-| Default Offline CI | `2fe129e` | `Passed` | 已在真实 GitHub Runner 上成功执行 |
-| PostgreSQL Integration CI | `2fe129e` | `Passed` | PostgreSQL 17 Integration 已在真实 GitHub Runner 上成功执行 |
+| Default Offline CI | `5b411cb` | `Passed` | 已在真实 GitHub Runner 上成功执行 |
+| PostgreSQL Integration CI | `5b411cb` | `Passed` | PostgreSQL 17 Integration 已在真实 GitHub Runner 上成功执行 |
 | Manual LLM cost acknowledgement（未确认费用） | `2fe129e` | Expected `Failed` | 明确拒绝执行，验证费用确认 fail-closed |
 | Manual LLM cost acknowledgement（已确认费用） | `2fe129e` | `Passed` | 仅通过费用确认前置门禁 |
-| DeepSeek protected-environment job | `2fe129e` | Stopped at `Waiting for review` | 人工审批路径已验证，未批准 deployment，Provider 未运行 |
+| DeepSeek protected-environment job | `2fe129e` | `Cancelled` after `Waiting for review` | 人工审批路径已验证，未批准 deployment，Provider 未运行 |
 | OpenAI protected-environment job | `2fe129e` | `Skipped` | 未选择 OpenAI，Provider 未运行 |
 | Real DeepSeek/OpenAI Integration | — | `Not Run` | 未配置或调用真实 Provider |
 
-等待审批的 Manual LLM workflow 必须取消，不得点击 `Review deployments`，也不得批准
-deployment。证据截取时 DeepSeek job 停在 `Waiting for review`；取消动作只用于结束等待状态，
-不改变真实 LLM `Not Run` 的结论。Real LLM Cost：`0`。
+Manual LLM workflow 已在审批等待阶段取消，没有批准 deployment。DeepSeek job 的最终状态为
+`Cancelled`，OpenAI job 为 `Skipped`；真实 LLM 保持 `Not Run`。Real LLM Cost：`0`。
 
 > Real LLM Integration: Not Run — no real Provider deployment was approved or executed.
 
@@ -156,7 +155,7 @@ deployment。证据截取时 DeepSeek job 停在 `Waiting for review`；取消�
 - Image digest promotion 与部署平台拉取验证；
 - 真实 LLM Integration（仅在明确授权和成本确认后）。
 
-## Freeze 与 Freeze Pending
+## Freeze 结论与历史 Pending 规则
 
 Phase 7 只有在以下硬条件都有 `Passed` 证据时才能正式 Freeze：
 
@@ -170,17 +169,20 @@ Phase 7 只有在以下硬条件都有 `Passed` 证据时才能正式 Freeze：
 8. Manual LLM Workflow 的安全审批路径得到验证；如不授权产生费用，真实调用继续明确记录
    为 `Not Run`，不得伪装为 Provider 已验证。
 
-任一必需硬门禁为 `Not Run`、`Skipped`、`Blocked` 或 `Failed` 时，状态必须保持
-`Freeze Pending`。Docker 动态门禁、Default Offline CI、PostgreSQL Integration CI 和
-Manual LLM Workflow 安全审批路径现均已有动态证据。真实 LLM 调用不属于未授权情况下的
-Freeze 必要条件，继续记录为 `Not Run`、费用 `0`。完成本次证据文档、本地全量测试和独立
-Freeze Review 之前，Phase 7 仍保持 `Freeze Pending`。
+Docker 动态门禁、Default Offline CI、PostgreSQL Integration CI、Manual LLM Workflow 安全
+审批路径、本地全量测试及独立 Freeze Review 均已有通过证据。真实 LLM 调用不属于未授权
+情况下的 Freeze 必要条件，继续记录为 `Not Run`、费用 `0`。Phase 7 Release Gate 当前状态为
+`Passed / Freeze`。
+
+历史状态（已结束）：Phase 7 — Runtime, Docker, CI and Release Gate Freeze Pending。
 
 ## Tag 策略
 
 - `v0.6.0` 保持 Phase 6 Freeze 基线；
-- Pending 状态不得创建或移动 `v0.7.0`；
-- 全部硬门禁通过后，在已审核且 clean 的基线 commit 上创建 annotated `v0.7.0` tag；
+- 历史发布规则：Pending 状态不得创建或移动 `v0.7.0`；
+- 全部硬门禁通过后，已在审核通过且 clean 的 commit `5b411cb` 上创建 annotated
+  `v0.7.0` tag，并已推送至 `origin`；
+- `v0.7.0` 不得移动、删除或重建；
 - Tag 注释只记录可公开的测试摘要和证据引用，不包含凭据、数据库 URL 或模型内容；
 - 已发布 tag 不得重写；修复应产生新 commit，并按版本策略创建后续 tag。
 
