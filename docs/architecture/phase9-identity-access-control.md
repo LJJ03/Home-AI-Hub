@@ -1,10 +1,12 @@
 # Phase 9 — Identity / Access Control / Trusted Deployment Architecture Design
 
-状态：**Architecture Design Approved / Implementation Not Started**。
+状态：**Architecture Decision Accepted / Implementation Not Started**。
 
 Phase 1–8 已冻结。Phase 8 annotated tag `v0.8.0` 已存在，且不得移动、删除或重建。
 本文只固化 Phase 9 架构决策，不代表任何 User、Auth、API、ORM 或 Migration 已实现，也不
 授权进入 Phase 9 implementation。
+
+正式决策记录见 [ADR 0002: Phase 9 Identity and Access Control Baseline](../adr/0002-phase9-identity-access-control.md)。
 
 ## 架构决策摘要
 
@@ -480,7 +482,7 @@ Trusted Local Mode 优先只绑定 loopback，不应暴露到公网。暴露到�
 | Resource owned by another Actor | 404 | 与资源不存在统一处理 |
 | Ownership mutation conflict | 409 | 返回安全冲突码 |
 | Auth persistence unavailable | 503 | 不泄漏数据库或基础设施信息 |
-| Unknown authentication error | 500 | 返回通用内部错误 |
+| 未知认证错误 | 500 | 返回通用内部错误 |
 
 401 响应可以包含标准 `WWW-Authenticate: Bearer`，但不得回显 Header 或 Token。
 
@@ -684,13 +686,14 @@ Phase 9 架构设计和第一版 implementation 不得：
 
 ## 是否建议进入 Phase 9 implementation
 
-**当前不建议立即进入。**
+**当前不进入 implementation。**
 
-虽然本设计已经完成文档落库，但仍应先完成独立 Architecture Review，并明确接受以下核心
-决策：
+ADR 0002 已正式接受以下核心决策：
 
 1. 第一阶段采用最小 User + 数据库管理的不透明 API Token，不采用 JWT；
 2. Trusted Local Mode 只用于受约束本地过渡部署，生产环境 fail fast；
 3. Conversation 使用单一 `owner_user_id`，遗留数据只回填到安装者显式创建的真实 User。
 
-上述决策获得用户确认且 Entry Criteria 全部满足后，才可以单独开始 Phase 9 Step 1。
+Architecture Decision Acceptance 只完成了实施前的一项门禁。本次任务不授权 Step 1。
+完成本次文档提交、确认当前 Runner 证据和 Entry Criteria 后，仍需用户单独指令才能开始
+Phase 9 Step 1。
