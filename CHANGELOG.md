@@ -5,16 +5,22 @@
 
 ## [Unreleased] — Phase 8 Conversation Domain / Chat Persistence
 
-- Implementation Step 1–6 已完成：Domain、ORM/Migration、Repository/UoW、Application
-  Service/Context Builder 与独立 Conversation API Boundary；
+- Implementation Step 1–7 已完成：Domain、ORM/Migration、Repository/UoW、Application
+  Service/Context Builder、独立 Conversation API Boundary、质量门禁和 Release Evidence；
 - Step 6 增强跨层依赖、公开端点表面、无状态 Chat 回归和 Secret/Provider 隔离门禁；
 - 新增显式 PostgreSQL-backed Conversation API production-wiring test，使用 MockProvider；
 - Step 6 commit `ac11520` 的 Default Offline CI 与 PostgreSQL Integration CI 已在真实
   GitHub Runner 通过；
-- Step 7 已准备文档、Release Evidence 与 15 项 Freeze Review checklist；Step 7 提交后的
-  当前 commit 仍须重新取得两项 Runner 证据；
+- Step 7 commit `ca05ab7` 的 Default Offline CI run `33528818430` 与 PostgreSQL
+  Integration run `33528818472` 均为 `completed / success`；
+- 首次 Freeze Review 已确认代码、测试、Runner、安全门禁和 Phase 3–7 冻结边界满足要求；
+  当前正在进行 docs-only cleanup，cleanup commit 通过两项 Runner 后再执行最终 Freeze
+  Review；
+- Manual Real LLM run `33479758528` 已 `completed / cancelled`：DeepSeek cancelled、
+  OpenAI skipped、deployment 未批准、Provider 未运行；
 - 没有修改 Phase 3–7 冻结公共契约、Docker/Compose 或 GitHub workflow；
-- Phase 8 尚未 Freeze，不创建新 tag；`v0.7.0` 保持指向 `5b411cb` 且不得移动；
+- Phase 8 尚未 Freeze 或正式发布，`v0.8.0` 尚未创建；`v0.7.0` 保持指向 `5b411cb`
+  且不得移动、删除或重建；
 - Real LLM Integration：`Not Run`；Real LLM Cost：`0`。
 
 ## [v0.7.0] — Phase 7 Runtime / Docker / CI / Release Gate（Freeze）

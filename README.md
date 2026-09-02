@@ -14,10 +14,12 @@ Phase 7 的 Docker 动态验证、Default Offline CI、PostgreSQL Integration CI
 安全审批路径均已取得证据，现已冻结；annotated tag `v0.7.0` 已发布并固定指向
 `5b411cb`，不得移动、删除或重建。真实 LLM Integration 仍为 `Not Run`，费用为 `0`。
 
-Phase 8 Conversation Domain / Chat Persistence 已完成 Implementation Step 1–6；Step 6
-commit `ac11520` 的 Default Offline CI 与 PostgreSQL Integration CI 均已通过。当前只进行
-Step 7 Documentation、Release Gate Update 与 Freeze Preparation，尚未 Freeze。现有无状态
-Chat API 保持不变，持久化 Conversation 能力通过独立 `/api/v1/conversations` API 提供。
+Phase 8 Conversation Domain / Chat Persistence 已完成 Implementation Step 1–7。Step 7
+commit `ca05ab7` 的 Default Offline CI 与 PostgreSQL Integration CI 均已在真实 GitHub
+Runner 通过。首次 Freeze Review 已完成，代码、测试、Runner 和安全门禁满足要求；当前仅
+同步 release evidence 文档，cleanup commit 通过 Runner 后还需执行最终 Freeze Review。
+Phase 8 尚未 Freeze 或发布，`v0.8.0` 尚未创建。现有无状态 Chat API 保持不变，持久化
+Conversation 能力通过独立 `/api/v1/conversations` API 提供。
 
 ## Docker 启动
 

@@ -41,9 +41,10 @@ job 注入一套 Provider 配置；缺失配置在 pytest 前 fail closed。没�
 Phase 7 的 Default Offline CI 与 PostgreSQL Integration CI 证据关联 commit `5b411cb`；
 Manual LLM 审批路径证据关联 commit `2fe129e`。后续 Release Gate 记录仍应保存对应 run
 URL、触发方式和时间，并保持日志无秘密、Prompt 或模型正文。Phase 7 Release Gate 当前
-状态为 `Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。Phase 8 Step 6
-commit `ac11520` 已重新取得 Default Offline CI 与 PostgreSQL Integration CI 的 Runner
-`Passed` 证据。Step 7 文档提交后必须再次为新的当前 revision 重跑这两个 Workflow，
-然后才能进入 Phase 8 Freeze Review。
+状态为 `Passed / Freeze`，annotated tag `v0.7.0` 已发布且不得移动或重建。Phase 8 Step 7
+commit `ca05ab7` 的 Default Offline CI run `33528818430` 与 PostgreSQL Integration run
+`33528818472` 均已 `completed / success`。首次 Phase 8 Freeze Review 已完成；docs-only
+cleanup 形成新 revision 后，必须再次取得这两个 Workflow 的 Runner `Passed` 证据，才能
+执行最终 Phase 8 Freeze Review。`v0.8.0` 尚未创建。
 
 完整发布判定见 [Phase 7 Release Gate](release-gate.md)。

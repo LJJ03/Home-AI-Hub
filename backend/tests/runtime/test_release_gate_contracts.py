@@ -1,4 +1,4 @@
-"""Static contracts for frozen Phase 7 and pending Phase 8 release evidence."""
+"""Static contracts for frozen Phase 7 and Phase 8 release evidence."""
 
 from __future__ import annotations
 
@@ -51,20 +51,26 @@ def test_release_gate_artifacts_exist() -> None:
     assert ADR.is_file()
 
 
-def test_phase_8_release_gate_records_scope_evidence_and_pending_status() -> None:
+def test_phase_8_release_gate_records_scope_and_post_review_status() -> None:
     release_gate = _source(PHASE_8_RELEASE_GATE)
 
-    assert "当前状态：**Freeze Review Pending**" in release_gate
+    assert (
+        "当前状态：**Freeze Review Completed / Final Freeze Review Pending**"
+        in release_gate
+    )
     for step in range(1, 7):
         assert f"| {step} |" in release_gate
     assert "| 7 |" in release_gate
-    assert "`ac11520`" in release_gate
+    assert "`ca05ab7`" in release_gate
+    assert "`33528818430`" in release_gate
+    assert "`33528818472`" in release_gate
     assert "Default Offline CI" in release_gate
     assert "PostgreSQL Integration CI" in release_gate
-    assert "Manual Real LLM Integration：`Not Run`" in release_gate
+    assert "Manual Real LLM workflow run `33479758528`" in release_gate
+    assert "Real LLM Integration：`Not Run`" in release_gate
     assert "Real LLM Cost：`0`" in release_gate
     assert "Phase 8 尚未 Freeze" in release_gate
-    assert "当前不得创建新 tag" in release_gate
+    assert "`v0.8.0` 尚未创建" in release_gate
     assert "Phase 8 已冻结" not in release_gate
 
 
@@ -72,9 +78,9 @@ def test_phase_8_freeze_review_checklist_is_complete() -> None:
     release_gate = _source(PHASE_8_RELEASE_GATE)
 
     for required_check in (
-        "Git working tree clean",
-        "Default Offline CI 在 Step 7 当前 commit",
-        "PostgreSQL Integration CI 在 Step 7 当前 commit",
+        "Cleanup commit 后 Git working tree clean",
+        "Default Offline CI 在 cleanup 当前 commit",
+        "PostgreSQL Integration CI 在 cleanup 当前 commit",
         "本地 Python 3.13",
         "20260901_0002",
         "Phase 3–7 冻结边界",
@@ -86,7 +92,7 @@ def test_phase_8_freeze_review_checklist_is_complete() -> None:
         "Dockerfile、Compose topology 与 GitHub workflow",
         "Manual LLM workflow deployment",
         "Phase 8 Implementation Step 1–7",
-        "独立 Freeze Review 已通过",
+        "独立最终 Freeze Review 已通过",
     ):
         assert required_check in release_gate
 
